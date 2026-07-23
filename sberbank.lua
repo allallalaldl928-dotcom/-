@@ -1,10 +1,8 @@
--- SBERBANK HUB [FULL INFINITY YIELD FLING & FULL FLY]
+-- SBERBANK HUB [COMPACT IY EDITION]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -27,9 +25,10 @@ ToggleButton.Draggable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
+-- Уменьшена высота меню (теперь видно ровно 3-4 функции)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 260, 0, 460)
-MainFrame.Position = UDim2.new(0.5, -130, 0.5, -230)
+MainFrame.Size = UDim2.new(0, 260, 0, 210)
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -105)
 MainFrame.BackgroundColor3 = Color3.fromRGB(5, 25, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -52,20 +51,20 @@ ToggleButton.MouseButton1Click:Connect(function()
 end)
 
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -16, 0, 40)
+Title.Size = UDim2.new(1, -16, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FULL IY]"
+Title.Text = "SBERBANK HUB [COMPACT]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 12
+Title.TextSize = 11
 Title.Font = Enum.Font.GothamBold
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", Title, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
 
 local Scroll = Instance.new("ScrollingFrame", MainFrame)
-Scroll.Size = UDim2.new(1, -12, 1, -60)
-Scroll.Position = UDim2.new(0, 6, 0, 54)
+Scroll.Size = UDim2.new(1, -12, 1, -50)
+Scroll.Position = UDim2.new(0, 6, 0, 46)
 Scroll.BackgroundTransparency = 1
 Scroll.CanvasSize = UDim2.new(0, 0, 0, 1250)
 Scroll.ScrollBarThickness = 3
@@ -107,35 +106,33 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. НАСТОЯЩИЙ FULL IY FLING (РАСКИДЫВАЕТ ВСЕХ С КОЛЛИЗИЕЙ И КРУТКОЙ)
+-- 1. ФЛИНГ
 local flingActive = false
-AddButton("Full Fling (IY Стиль)", function(v) flingActive = v end)
+AddButton("Fling (Infinite Yield)", function(v) flingActive = v end)
 
 RunService.Heartbeat:Connect(function()
     if flingActive then
-        local char = LocalPlayer.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if root and hum then
-            -- Отключаем коллизию деталей игрока на время флинга, чтобы не мешало разгону
-            for _, part in ipairs(char:GetDescendants()) do
+        local character = LocalPlayer.Character
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if rootPart and humanoid then
+            for _, part in ipairs(character:GetDescendants()) do
                 if part:IsA("BasePart") then
                     part.CanCollide = false
                 end
             end
-            
-            local vel = root.AssemblyLinearVelocity
-            root.AssemblyLinearVelocity = Vector3.new(0, 5000, 0) + Vector3.new(vel.X * 100, 0, vel.Z * 100)
+            local vel = rootPart.AssemblyLinearVelocity
+            rootPart.AssemblyLinearVelocity = Vector3.new(0, 4000, 0) + Vector3.new(vel.X * 50, 0, vel.Z * 50)
             RunService.RenderStepped:Wait()
-            if root then
-                root.AssemblyLinearVelocity = Vector3.new(0, -5000, 0) + Vector3.new(vel.X * 100, 0, vel.Z * 100)
-                root.CFrame = root.CFrame * CFrame.Angles(math.rad(math.random(-720, 720)), math.rad(math.random(-720, 720)), math.rad(math.random(-720, 720)))
+            if rootPart then
+                rootPart.AssemblyLinearVelocity = Vector3.new(0, -4000, 0) + Vector3.new(vel.X * 50, 0, vel.Z * 50)
+                rootPart.CFrame = rootPart.CFrame * CFrame.Angles(math.rad(math.random(-360, 360)), math.rad(math.random(-360, 360)), math.rad(math.random(-360, 360)))
             end
         end
     end
 end)
 
--- 2. НАСТОЯЩИЙ FULL FLY (ПОЛНЫЙ КОНТРОЛЬ НАПРАВЛЕНИЯ КАМЕРЫ + КНОПКИ)
+-- 2. ФЛАЙ
 local flyActive = false
 local flySpeed = 50
 local flyUpState = false
@@ -176,7 +173,7 @@ flyDownBtn.MouseButton1Down:Connect(function() flyDownState = true end)
 flyDownBtn.MouseButton1Up:Connect(function() flyDownState = false end)
 flyDownBtn.MouseLeave:Connect(function() flyDownState = false end)
 
-AddButton("Full Fly (IY Полный полёт)", function(v)
+AddButton("Fly (Infinite Yield)", function(v)
     flyActive = v
     flyUpBtn.Visible = v
     flyDownBtn.Visible = v
@@ -249,7 +246,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 5. БАНИХОП (BHOP)
+-- 5. БАНИХОП
 local bhopActive = false
 AddButton("Bhop (Авто-прыжок при беге)", function(v) bhopActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -276,7 +273,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 7-10. ЕСП + РОЛИ
+-- 7-10. ЕСП
 local espBoxActive = false
 local boxObjects = {}
 AddButton("ESP Box (Игроки)", function(v) espBoxActive = v end)
@@ -413,7 +410,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- КНОПКИ УПРАВЛЕНИЯ
+-- КНОПКИ УПРАВЛЕНИЯ (БЕЗ ЛКМ/ПКМ)
 local function CreateIsolatedButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -437,19 +434,4 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
-local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 65, 0, 45), UDim2.new(0.3, 0, 1, -60))
-local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 65, 0, 45), UDim2.new(0.5, 0, 1, -60))
-
-local function ClickCenter(buttonEnum)
-    local viewport = Camera.ViewportSize
-    local centerX = viewport.X / 2
-    local centerY = viewport.Y / 2
-    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, buttonEnum, true, game, 0)
-    task.wait(0.05)
-    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, buttonEnum, false, game, 0)
-end
-
-lkmBtn.MouseButton1Click:Connect(function() ClickCenter(0) end)
-pkmBtn.MouseButton1Click:Connect(function() ClickCenter(1) end)
-
-print("SBERBANK HUB [FULL IY VERSION] успешно запущен!")
+print("SBERBANK HUB [COMPACT IY] успешно запущен!")
