@@ -1,4 +1,4 @@
--- SBERBANK HUB [FULL ULTIMATE PACK]
+-- SBERBANK HUB [ULTIMATE FIXED PACK + REAL PC CONTROLS]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -57,7 +57,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FULL PACK]"
+Title.Text = "SBERBANK HUB [FIXED]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -68,7 +68,7 @@ local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Size = UDim2.new(1, -12, 1, -60)
 Scroll.Position = UDim2.new(0, 6, 0, 54)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 950)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 1150)
 Scroll.ScrollBarThickness = 3
 local UIList = Instance.new("UIListLayout", Scroll)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -110,12 +110,11 @@ end
 
 -- 1. ФЛИНГ
 local flingActive = false
-AddButton("Fling (Крутилка)", function(v) flingActive = v end)
+AddButton("Fling (Безопасная крутилка)", function(v) flingActive = v end)
 RunService.Heartbeat:Connect(function()
     if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
-        hrp.AssemblyLinearVelocity = Vector3.new(99999, 99999, 99999)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
     end
 end)
 
@@ -174,7 +173,20 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 4. ЕСП БОКС
+-- 4. НОКЛИП
+local noclipActive = false
+AddButton("Noclip (Проход сквозь стены)", function(v) noclipActive = v end)
+RunService.Stepped:Connect(function()
+    if noclipActive and LocalPlayer.Character then
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 5. ЕСП БОКС
 local espBoxActive = false
 local boxObjects = {}
 AddButton("ESP Box (Игроки)", function(v)
@@ -182,7 +194,7 @@ AddButton("ESP Box (Игроки)", function(v)
     if not v then for _, o in pairs(boxObjects) do if o then o:Remove() end end boxObjects = {} end
 end)
 
--- 5. ЕСП ЛИНИИ
+-- 6. ЕСП ЛИНИИ
 local espLinesActive = false
 local lineObjects = {}
 AddButton("ESP Lines (Трасеры)", function(v)
@@ -190,7 +202,7 @@ AddButton("ESP Lines (Трасеры)", function(v)
     if not v then for _, o in pairs(lineObjects) do if o then o:Remove() end end lineObjects = {} end
 end)
 
--- 6. ЕСП ПЛЕЙЕР (Имена)
+-- 7. ЕСП ПЛЕЙЕР
 local espPlayerNames = false
 local nameObjects = {}
 AddButton("ESP Player (Никнеймы)", function(v)
@@ -198,7 +210,7 @@ AddButton("ESP Player (Никнеймы)", function(v)
     if not v then for _, o in pairs(nameObjects) do if o then o:Remove() end end nameObjects = {} end
 end)
 
--- 7. ЕСП НПС
+-- 8. ЕСП НПС
 local espNpcActive = false
 local npcObjects = {}
 AddButton("ESP NPC", function(v)
@@ -207,7 +219,6 @@ AddButton("ESP NPC", function(v)
 end)
 
 RunService.RenderStepped:Connect(function()
-    -- Очистка старой графики
     for _, o in pairs(boxObjects) do if o then o:Remove() end end boxObjects = {}
     for _, o in pairs(lineObjects) do if o then o:Remove() end end lineObjects = {}
     for _, o in pairs(nameObjects) do if o then o:Remove() end end nameObjects = {}
@@ -283,7 +294,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 8. ФРИЗ (СПИСОК / ВСЕ ОСТАЛЬНЫЕ)
+-- 9. ФРИЗ
 local freezeActive = false
 AddButton("Freeze (Заморозить игроков)", function(v) freezeActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -302,7 +313,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 9. БРИНГ АЛ АЙТЕМС
+-- 10. БРИНГ АЛ АЙТЕМС
 AddButton("Bring All Items (Собрать лут)", function()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -313,7 +324,23 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- 10. ЕСП РОЛЕС В MM2
+-- 11. АВТО-ПОДБОР ОРУЖИЯ ШЕРИФА
+local autoGunActive = false
+AddButton("Auto-Grab Sheriff Gun (MM2)", function(v) autoGunActive = v end)
+RunService.Heartbeat:Connect(function()
+    if autoGunActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        for _, obj in ipairs(Workspace:GetChildren()) do
+            if obj:IsA("Tool") and (obj.Name == "Gun" or obj.Name == "Revolver") then
+                if obj:FindFirstChild("Handle") then
+                    obj.Handle.CFrame = hrp.CFrame
+                end
+            end
+        end
+    end
+end)
+
+-- 12. ЕСП РОЛЕС В MM2
 local mm2EspActive = false
 local mm2Objects = {}
 AddButton("ESP Roles MM2 (Шериф/Убийца)", function(v)
@@ -331,7 +358,6 @@ RunService.RenderStepped:Connect(function()
             local role = "Невинный"
             local color = Color3.fromRGB(0, 255, 0)
             
-            -- Проверка инвентаря/рюкзака на роли MM2
             local backpack = plr:FindFirstChildOfClass("Backpack")
             local char = plr.Character
             local function hasItem(container)
@@ -362,39 +388,73 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 11. УПРАВЛЕНИЕ POJAV LAUNCHER (Кнопки)
+-- 13. ИДЕАЛЬНОЕ УПРАВЛЕНИЕ (КНОПКИ НА СВОИХ МЕСТАХ)
 local PojavPanel = Instance.new("Frame", ScreenGui)
 PojavPanel.Size = UDim2.new(1, 0, 1, 0)
 PojavPanel.BackgroundTransparency = 1
 PojavPanel.Visible = true
 
-local function CreatePojavKey(name, size, pos)
+local vim = game:GetService("VirtualInputManager")
+
+local function CreateKey(name, size, pos, keyCode, isMouse)
     local btn = Instance.new("TextButton", PojavPanel)
     btn.Size = size
     btn.Position = pos
-    btn.BackgroundColor3 = Color3.fromRGB(15, 40, 25)
-    btn.BackgroundTransparency = 0.35
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BackgroundTransparency = 0.5
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 14
+    btn.TextSize = 16
     btn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 180, 90), Thickness = 1.5})
-    return btn
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+    Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
+
+    -- Теперь кнопки можно зажимать!
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            btn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+            if isMouse == "Left" then
+                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 0, true, game, 1)
+            elseif isMouse == "Right" then
+                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 1, true, game, 1)
+            elseif keyCode then
+                vim:SendKeyEvent(true, keyCode, false, game)
+            end
+        end
+    end)
+
+    btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+            if isMouse == "Left" then
+                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 0, false, game, 1)
+            elseif isMouse == "Right" then
+                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 1, false, game, 1)
+            elseif keyCode then
+                vim:SendKeyEvent(false, keyCode, false, game)
+            end
+        end
+    end)
 end
 
-CreatePojavKey("Esc", UDim2.new(0, 50, 0, 35), UDim2.new(0, 10, 0, 10))
-CreatePojavKey("ЛКМ", UDim2.new(0, 90, 0, 45), UDim2.new(0, 70, 0, 10))
-CreatePojavKey("ПКМ", UDim2.new(0, 90, 0, 45), UDim2.new(0, 170, 0, 10))
-CreatePojavKey("Q", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0, 10))
-local btnE = CreatePojavKey("E", UDim2.new(0, 45, 0, 45), UDim2.new(0, 270, 0, 10))
-CreatePojavKey("Shift", UDim2.new(0, 60, 0, 35), UDim2.new(0, 330, 0, 10))
+-- Позиции расставлены идеально по зонам со скриншота:
+-- 1. Ескейп (В левом верхнем углу, под значком Roblox)
+CreateKey("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50), Enum.KeyCode.Escape, nil)
 
-btnE.MouseButton1Click:Connect(function()
-    local vim = game:GetService("VirtualInputManager")
-    vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-    task.wait(0.05)
-    vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-end)
+-- 2. ЛКМ (В верхней левой части по центру)
+CreateKey("ЛКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.25, -50, 0, 45), nil, "Left")
 
-print("Sberbank Hub [Full Pack Edition] успешно запущен!")
+-- 3. ПКМ (В верхней правой части по центру)
+CreateKey("ПКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.65, -50, 0, 45), nil, "Right")
+
+-- 4. Q (В правом верхнем углу под игроками)
+CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q, nil)
+
+-- 5. E (Чуть выше левого джойстика)
+CreateKey("E", UDim2.new(0, 60, 0, 60), UDim2.new(0.25, -30, 0.55, 0), Enum.KeyCode.E, nil)
+
+-- 6. Shift (Над правой зоной поворота камеры)
+CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift, nil)
+
+print("Sberbank Hub [Working Controls Edition] успешно запущен!")
