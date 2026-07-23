@@ -14,7 +14,6 @@ ScreenGui.Name = "SberbankHubGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
--- ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
 ToggleButton.Size = UDim2.new(0, 50, 0, 50)
 ToggleButton.Position = UDim2.new(0, 20, 0, 150)
@@ -27,7 +26,6 @@ ToggleButton.Selectable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
--- ГЛАВНОЕ ОКНО ХАБА
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 280, 0, 380)
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -190)
@@ -145,11 +143,9 @@ local function AddButton(name, callback)
     end)
 end
 
--- КОНТЕЙНЕР ДЛЯ ESP ВИЗУАЛОВ
 local espFolder = Instance.new("Folder", ScreenGui)
 espFolder.Name = "ESP_Visuals"
 
--- 1. УЛУЧШЕННЫЙ ФЛАЙ (Поворот тела вслед за камерой + джойстик)
 local flyActive = false
 local flySpeed = 55
 AddButton("Fly (Поворот за камерой)", function(v)
@@ -185,7 +181,6 @@ AddButton("Fly (Поворот за камерой)", function(v)
                 else
                     cBv.Velocity = Vector3.new(0, 0, 0)
                 end
-                -- Персонаж полностью поворачивается туда, куда смотрит камера (вниз/вверх/в стороны)
                 cHrp.CFrame = CFrame.new(cHrp.Position, cHrp.Position + camCFrame.LookVector)
             end
             if hrp and hrp:FindFirstChild("SberFlyVel") then
@@ -201,7 +196,6 @@ AddButton("Fly (Поворот за камерой)", function(v)
     end
 end)
 
--- 2. ФЛИНГ СТОЯ (Безопасный)
 local flingActive = false
 AddButton("Fling (Стоя)", function(v) 
     flingActive = v 
@@ -221,7 +215,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ПЕРЕМЕННЫЕ ESP
 local espPlayers = false
 local espNpcs = false
 local espBoxes = false
@@ -234,7 +227,6 @@ AddButton("ESP Boxes (Квадраты)", function(v) espBoxes = v end)
 AddButton("ESP Lines (Линии)", function(v) espLines = v end)
 AddButton("ESP MM2 Roles (Шериф/Убийца)", function(v) espMm2Roles = v end)
 
--- 3. БАНИХОП (BunnyHop)
 local bhopActive = false
 AddButton("BunnyHop (Авто-прыжок)", function(v) bhopActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -247,7 +239,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 4. NOCLIP
 local noclipActive = false
 AddButton("Noclip", function(v) 
     noclipActive = v 
@@ -265,7 +256,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 5. SPEED HACK
 local speedActive = false
 AddButton("Speed Hack", function(v) 
     speedActive = v 
@@ -278,7 +268,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 6. HIGH JUMP
 local highJumpActive = false
 AddButton("High Jump", function(v) 
     highJumpActive = v 
@@ -291,7 +280,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ЕДИНЫЙ ЦИКЛ РЕНДЕРА ЕСП (Автообновление для новых/переродившихся игроков)
 RunService.RenderStepped:Connect(function()
     for _, child in ipairs(espFolder:GetChildren()) do
         child:Destroy()
@@ -299,8 +287,7 @@ RunService.RenderStepped:Connect(function()
 
     if not ScreenGui.Parent then return end
 
-    -- Функция определения роли MM2
-    fnGetMm2Role = function(plr)
+    local function fnGetMm2Role(plr)
         if not espMm2Roles then return "" end
         local backpack = plr:FindFirstChildOfClass("Backpack")
         local char = plr.Character
@@ -318,14 +305,12 @@ RunService.RenderStepped:Connect(function()
         return " [МИРНЫЙ]"
     end
 
-    -- Обработка игроков
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") then
             local char = p.Character
             local hrp = char.HumanoidRootPart
             local head = char:FindFirstChild("Head")
             
-            -- Подсветка персонажа (ESP Players)
             if espPlayers then
                 local hl = char:FindFirstChild("SberHighlight")
                 if not hl then
@@ -345,7 +330,6 @@ RunService.RenderStepped:Connect(function()
 
             local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
             if onScreen then
-                -- ESP BOXES (Квадраты вокруг игрока)
                 if espBoxes and head then
                     local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
                     local legPos = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))
@@ -359,7 +343,6 @@ RunService.RenderStepped:Connect(function()
                     Instance.new("UIStroke", box, {Color = Color3.fromRGB(0, 255, 100), Thickness = 1.5})
                 end
 
-                -- ESP LINES (Линии от низа экрана до игроков)
                 if espLines then
                     local line = Instance.new("Frame", espFolder)
                     local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
@@ -377,7 +360,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Обработка NPC
     if espNpcs then
         for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
