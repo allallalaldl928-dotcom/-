@@ -50,8 +50,34 @@ BgGradient.Color = ColorSequence.new({
 })
 BgGradient.Rotation = 45
 
-ToggleButton.Activated:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
+-- Надежное открытие/закрытие для мобильных (обход багов Draggable)
+local duplicatingCheck = false
+ToggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local startPos = input.Position
+        local moved = false
+        
+        local connection
+        connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                connection:Disconnect()
+                if not moved then
+                    MainFrame.Visible = not MainFrame.Visible
+                end
+            end
+        end)
+        
+        -- Проверка, тянул ли пользователь иконку или просто нажал
+        task.spawn(function()
+            while input.UserInputState == Enum.UserInputState.Begin do
+                if (input.Position - startPos).Magnitude > 10 then
+                    moved = true
+                    break
+                end
+                task.wait()
+            end
+        end)
+    end
 end)
 
 local Title = Instance.new("TextLabel", MainFrame)
@@ -112,7 +138,7 @@ end
 
 -- 3. ФУНКЦИИ
 
--- Флай (Fly) - Адаптирован под сенсорный джойстик и клавиатуру
+-- Флай (Fly)
 local newFlying = false
 local flyKeys = {W = false, S = false, A = false, D = false, Space = false, Shift = false}
 
@@ -139,12 +165,10 @@ AddButton("Fly (Управляемый)", function(v)
                 local look = Camera.CFrame.LookVector
                 local right = Camera.CFrame.RightVector
                 
-                -- Поддержка моб. джойстика
                 if currentHum.MoveDirection.Magnitude > 0 then
                     moveVec = moveVec + currentHum.MoveDirection
                 end
                 
-                -- Поддержка ПК-клавиш
                 if flyKeys.W then moveVec = moveVec + look end
                 if flyKeys.S then moveVec = moveVec - look end
                 if flyKeys.A then moveVec = moveVec - right end
@@ -187,7 +211,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Флинг (Fling) - Исправлена физика расталкивания
+-- Флинг (Fling)
 local newFlingActive = false
 AddButton("Fling (Раскидывание)", function(v) newFlingActive = v end)
 
@@ -364,7 +388,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Заморозка (Freeze) - Исправлено отключение (разанкоривание)
+-- Заморозка (Freeze)
 local freezeActive = false
 AddButton("Freeze (Заморозка)", function(v) 
     freezeActive = v
@@ -397,7 +421,7 @@ AddButton("Bring All Items (Лут)", function()
     end
 end)
 
--- 4. ИСПРАВЛЕННЫЕ КНОПКИ УПРАВЛЕНИЯ E, Q, Shift ДЛЯ МОБИЛЬНЫХ
+-- 4. КНОПКИ УПРАВЛЕНИЯ E, Q, Shift ДЛЯ МОБИЛЬНЫХ
 local function CreateScreenButton(name, size, pos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -409,7 +433,7 @@ local function CreateScreenButton(name, size, pos, callback)
     btn.TextSize = 14
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = true
-    btn.Active = false -- Не блокирует вращение камеры пальцем
+    btn.Active = false
     btn.Modal = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
@@ -418,7 +442,6 @@ local function CreateScreenButton(name, size, pos, callback)
     return btn
 end
 
--- Кнопка E
 CreateScreenButton("E", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, 0), function()
     pcall(function()
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
@@ -427,7 +450,6 @@ CreateScreenButton("E", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, 0), fun
     end)
 end)
 
--- Кнопка Q
 CreateScreenButton("Q", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, -55), function()
     pcall(function()
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
@@ -436,7 +458,6 @@ CreateScreenButton("Q", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, -55), f
     end)
 end)
 
--- Кнопка Shift
 CreateScreenButton("Shift", UDim2.new(0, 55, 0, 45), UDim2.new(1, -125, 0.45, 0), function()
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then
