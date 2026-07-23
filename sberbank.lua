@@ -1,8 +1,9 @@
--- SBERBANK HUB [IY FLING + BHOP + HIGH JUMP]
+-- SBERBANK HUB [FULL INFINITY YIELD FLING & FULL FLY]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
@@ -55,7 +56,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [MAX]"
+Title.Text = "SBERBANK HUB [FULL IY]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -106,27 +107,35 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ТОЧНЫЙ ОРИГИНАЛЬНЫЙ ФЛИНГ ИЗ INFINITY YIELD
+-- 1. НАСТОЯЩИЙ FULL IY FLING (РАСКИДЫВАЕТ ВСЕХ С КОЛЛИЗИЕЙ И КРУТКОЙ)
 local flingActive = false
-AddButton("Fling (IY Стиль)", function(v) flingActive = v end)
+AddButton("Full Fling (IY Стиль)", function(v) flingActive = v end)
 
 RunService.Heartbeat:Connect(function()
     if flingActive then
-        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
         if root and hum then
+            -- Отключаем коллизию деталей игрока на время флинга, чтобы не мешало разгону
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+            
             local vel = root.AssemblyLinearVelocity
-            root.AssemblyLinearVelocity = Vector3.new(0, 3000, 0) + Vector3.new(vel.X, 0, vel.Z)
+            root.AssemblyLinearVelocity = Vector3.new(0, 5000, 0) + Vector3.new(vel.X * 100, 0, vel.Z * 100)
             RunService.RenderStepped:Wait()
             if root then
-                root.AssemblyLinearVelocity = Vector3.new(0, -3000, 0) + Vector3.new(vel.X, 0, vel.Z)
-                root.CFrame = root.CFrame * CFrame.Angles(math.rad(math.random(-360, 360)), math.rad(math.random(-360, 360)), math.rad(math.random(-360, 360)))
+                root.AssemblyLinearVelocity = Vector3.new(0, -5000, 0) + Vector3.new(vel.X * 100, 0, vel.Z * 100)
+                root.CFrame = root.CFrame * CFrame.Angles(math.rad(math.random(-720, 720)), math.rad(math.random(-720, 720)), math.rad(math.random(-720, 720)))
             end
         end
     end
 end)
 
--- 2. ФЛАЙ КАК В INFINITY YIELD
+-- 2. НАСТОЯЩИЙ FULL FLY (ПОЛНЫЙ КОНТРОЛЬ НАПРАВЛЕНИЯ КАМЕРЫ + КНОПКИ)
 local flyActive = false
 local flySpeed = 50
 local flyUpState = false
@@ -167,7 +176,7 @@ flyDownBtn.MouseButton1Down:Connect(function() flyDownState = true end)
 flyDownBtn.MouseButton1Up:Connect(function() flyDownState = false end)
 flyDownBtn.MouseLeave:Connect(function() flyDownState = false end)
 
-AddButton("Fly (Infinite Yield Стиль)", function(v)
+AddButton("Full Fly (IY Полный полёт)", function(v)
     flyActive = v
     flyUpBtn.Visible = v
     flyDownBtn.Visible = v
@@ -227,7 +236,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 4. ВЫСОКИЙ ПРЫЖОК (HIGH JUMP)
+-- 4. ВЫСОКИЙ ПРЫЖОК
 local highJumpActive = false
 AddButton("High Jump (Высокий прыжок)", function(v) highJumpActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -443,4 +452,4 @@ end
 lkmBtn.MouseButton1Click:Connect(function() ClickCenter(0) end)
 pkmBtn.MouseButton1Click:Connect(function() ClickCenter(1) end)
 
-print("SBERBANK HUB [MAX VERSION] успешно запущен!")
+print("SBERBANK HUB [FULL IY VERSION] успешно запущен!")
