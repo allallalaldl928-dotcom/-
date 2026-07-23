@@ -1,4 +1,4 @@
--- SBERBANK HUB [FINAL FULL MOBILE]
+-- SBERBANK HUB [FIXED MOVEMENT & FLING]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -55,7 +55,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FINAL]"
+Title.Text = "SBERBANK HUB [FIX]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -106,14 +106,14 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ (Круговая карусель с раскидыванием)
+-- 1. ФЛИНГ ТОЛЬКО ПО ОСИ Y (Чистое вращение)
 local flingActive = false
-AddButton("Fling (Безопасная крутилка)", function(v) flingActive = v end)
+AddButton("Fling (Строго по оси Rotate)", function(v) flingActive = v end)
 RunService.Heartbeat:Connect(function()
     if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 45000, 0)
-        hrp.AssemblyLinearVelocity = Vector3.new(math.sin(tick() * 50) * 50, 2, math.cos(tick() * 50) * 50)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 30000, 0) -- Крутит ровно на месте
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
     end
 end)
 
@@ -286,7 +286,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- КАСТОМНЫЙ ДЖОЙСТИК
+-- ИСПРАВЛЕННЫЙ КАСТОМНЫЙ ДЖОЙСТИК (Не крутит камеру)
 local thumbstickArea = Instance.new("Frame", ScreenGui)
 thumbstickArea.Name = "CustomThumbstickArea"
 thumbstickArea.Size = UDim2.new(0, 200, 0, 200)
@@ -346,12 +346,18 @@ RunService.RenderStepped:Connect(function()
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if currentMoveVector.Magnitude > 0 then
+            -- Двигаем персонажа строго относительно камеры, но без принудительного вращения самой камеры
             local camFwd = Camera.CFrame.LookVector
             local camRight = Camera.CFrame.RightVector
             camFwd = Vector3.new(camFwd.X, 0, camFwd.Z).Unit
             camRight = Vector3.new(camRight.X, 0, camRight.Z).Unit
             local moveDir = (camFwd * -currentMoveVector.Z) + (camRight * currentMoveVector.X)
-            hum:Move(moveDir, true)
+            
+            -- Используем прямое смещение позиции вместо hum:Move, чтобы экран не дергался
+            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and not flyActive then
+                hrp.CFrame = hrp.CFrame + (moveDir * (hum.WalkSpeed * RunService.RenderStepped:Wait()))
+            end
         end
     end
 end)
@@ -407,4 +413,4 @@ CreateKey("ПКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.65, -50, 0, 45), nil, 
 CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q, nil)
 CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift, nil)
 
-print("Sberbank Hub [FINAL] успешно запущен!")
+print("Sberbank Hub успешно запущен!")
