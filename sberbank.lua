@@ -1,4 +1,4 @@
--- SBERBANK HUB [ULTIMATE FIXED PACK + REAL PC CONTROLS]
+-- SBERBANK HUB [FINAL MOBILE FIXED PACK + PERFECT FLING]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -108,13 +108,31 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ
+-- 1. ФЛИНГ (ИДЕАЛЬНЫЙ: без наклонов и провалов под карту)
 local flingActive = false
-AddButton("Fling (Безопасная крутилка)", function(v) flingActive = v end)
-RunService.Heartbeat:Connect(function()
-    if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
+local bgFling, bavFling
+AddButton("Fling (Безопасная крутилка)", function(v)
+    flingActive = v
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if flingActive then
+        -- Запрещаем наклоняться по осям X и Z (Фикс "под углом")
+        bgFling = Instance.new("BodyGyro", hrp)
+        bgFling.P = 9e4
+        bgFling.MaxTorque = Vector3.new(math.huge, 0, math.huge)
+        bgFling.CFrame = hrp.CFrame
+
+        -- Включаем стабильное вращение только по оси Y (Фикс "тепает под карту")
+        bavFling = Instance.new("BodyAngularVelocity", hrp)
+        bavFling.AngularVelocity = Vector3.new(0, 40000, 0) -- Скорость подобрана для мощного откидывания без багов
+        bavFling.MaxTorque = Vector3.new(0, math.huge, 0)
+    else
+        if bgFling then bgFling:Destroy() end
+        if bavFling then bavFling:Destroy() end
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
     end
 end)
 
@@ -388,16 +406,11 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 13. ИДЕАЛЬНОЕ УПРАВЛЕНИЕ (КНОПКИ НА СВОИХ МЕСТАХ)
-local PojavPanel = Instance.new("Frame", ScreenGui)
-PojavPanel.Size = UDim2.new(1, 0, 1, 0)
-PojavPanel.BackgroundTransparency = 1
-PojavPanel.Visible = true
-
+-- 13. ИГРОВЫЕ КНОПКИ УПРАВЛЕНИЯ
 local vim = game:GetService("VirtualInputManager")
 
 local function CreateKey(name, size, pos, keyCode, isMouse)
-    local btn = Instance.new("TextButton", PojavPanel)
+    local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
     btn.Position = pos
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
@@ -410,7 +423,6 @@ local function CreateKey(name, size, pos, keyCode, isMouse)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
 
-    -- Теперь кнопки можно зажимать!
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             btn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
@@ -438,23 +450,12 @@ local function CreateKey(name, size, pos, keyCode, isMouse)
     end)
 end
 
--- Позиции расставлены идеально по зонам со скриншота:
--- 1. Ескейп (В левом верхнем углу, под значком Roblox)
+-- Кнопки строго по позициям с твоего скриншота:
 CreateKey("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50), Enum.KeyCode.Escape, nil)
-
--- 2. ЛКМ (В верхней левой части по центру)
 CreateKey("ЛКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.25, -50, 0, 45), nil, "Left")
-
--- 3. ПКМ (В верхней правой части по центру)
 CreateKey("ПКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.65, -50, 0, 45), nil, "Right")
-
--- 4. Q (В правом верхнем углу под игроками)
 CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q, nil)
-
--- 5. E (Чуть выше левого джойстика)
 CreateKey("E", UDim2.new(0, 60, 0, 60), UDim2.new(0.25, -30, 0.55, 0), Enum.KeyCode.E, nil)
-
--- 6. Shift (Над правой зоной поворота камеры)
 CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift, nil)
 
-print("Sberbank Hub [Working Controls Edition] успешно запущен!")
+print("Sberbank Hub [Perfect Fling Edition] успешно запущен!")
