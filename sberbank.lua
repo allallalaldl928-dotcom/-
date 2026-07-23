@@ -1,4 +1,4 @@
--- SBERBANK HUB [FIXED SPIN FLING]
+-- SBERBANK HUB [FINAL FLY & UI FIX]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -55,7 +55,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIX]"
+Title.Text = "SBERBANK HUB [FIXED]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -106,23 +106,23 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. КРУТКА ВЛЕВО СТРОГО НА НОГАХ (БЕЗ ПЕРЕВОРОТОВ)
+-- 1. ФЛИНГ ВЛЕВО
 local flingActive = false
-AddButton("Fling Влево (Ровный крутильщик)", function(v) flingActive = v end)
+AddButton("Fling Влево (Ровно на ногах)", function(v) flingActive = v end)
 RunService.Heartbeat:Connect(function()
     if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        -- Крутим только по оси Y (влево = отрицательное значение), скорость бешеная чтобы откидывать, но без наклонов
-        hrp.AssemblyAngularVelocity = Vector3.new(0, -15000, 0)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 50, 0)
+        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, hrp.CFrame.Rotation.Y - 0.5, 0)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, -30000, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 25, 0)
     end
 end)
 
--- 2. ФЛАЙ
+-- 2. ИСПРАВЛЕННЫЙ ФЛАЙ (Без инверсии и без прыжков)
 local flyActive = false
 local flySpeed = 50
 local bv, bg
-AddButton("Fly (Полет 3D)", function(v)
+AddButton("Fly (Прямой полет за камерой)", function(v)
     flyActive = v
     local char = LocalPlayer.Character
     if not char then return end
@@ -156,9 +156,13 @@ RunService.RenderStepped:Connect(function()
             local moveDir = hum.MoveDirection
             local velocity = Vector3.new(0, 0, 0)
             if moveDir.Magnitude > 0 then
-                velocity = Camera.CFrame:VectorToWorldSpace(Vector3.new(moveDir.X, 0, moveDir.Z)) * flySpeed
+                -- Прямое векторное умножение без инверсии
+                velocity = Camera.CFrame.LookVector * (moveDir.Z * -flySpeed) + Camera.CFrame.RightVector * (moveDir.X * flySpeed)
+                -- Дополнительно страхуем через стандартный пересчет направления джойстика
+                local flatLook = Vector3.new(Camera.CFrame.LookVector.X, 0, Camera.CFrame.LookVector.Z).Unit
+                local flatRight = Vector3.new(Camera.CFrame.RightVector.X, 0, Camera.CFrame.RightVector.Z).Unit
+                velocity = (flatLook * moveDir.Z + flatRight * moveDir.X) * flySpeed + Vector3.new(0, moveDir.Y * flySpeed, 0)
             end
-            if hum.Jump then velocity = velocity + Vector3.new(0, flySpeed, 0) end
             bv.Velocity = velocity
         end
     end
@@ -323,7 +327,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- БЕЗОПАСНЫЕ КНОПКИ УПРАВЛЕНИЯ
+-- КНОПКИ УПРАВЛЕНИЯ
 local function CreateIsolatedButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -347,9 +351,9 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
--- КНОПКИ ЛКМ и ПКМ
-local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 65, 0, 45), UDim2.new(1, -160, 1, -110))
-local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 65, 0, 45), UDim2.new(1, -90, 1, -110))
+-- СМЕЩЕННЫЕ КНОПКИ ЛКМ и ПКМ (чтобы не загораживали центр экрана)
+local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 65, 0, 45), UDim2.new(0.3, 0, 1, -60))
+local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 65, 0, 45), UDim2.new(0.5, 0, 1, -60))
 
 local function ClickCenter(buttonEnum)
     local viewport = Camera.ViewportSize
@@ -368,4 +372,4 @@ pkmBtn.MouseButton1Click:Connect(function()
     ClickCenter(1)
 end)
 
-print("SBERBANK HUB [SPIN FIX] запущен!")
+print("SBERBANK HUB [FINAL FLY & UI FIX] успешно запущен!")
