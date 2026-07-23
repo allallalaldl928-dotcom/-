@@ -1,4 +1,4 @@
--- SBERBANK HUB [MOBILE FIXED & SUPER SPIN]
+-- SBERBANK HUB [FINAL MOBILE FIXED]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -54,7 +54,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [MOBILE FIX]"
+Title.Text = "SBERBANK HUB [FIXED]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -105,7 +105,7 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. СУПЕР-СПИН (Откидывание)
+-- 1. СУПЕР-СПИН
 local spinActive = false
 AddButton("Super Spin (Быстрое откидывание)", function(v) spinActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -116,7 +116,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 2. РАБОЧИЙ ФЛАЙ
+-- 2. ФЛАЙ
 local flyActive = false
 local flySpeed = 50
 local bv, bg
@@ -285,10 +285,8 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- ЭКРАННЫЕ КНОПКИ (Безопасные для мобилок, без краша джойстика)
-local vim = pcall(function() return game:GetService("VirtualInputManager") end) and game:GetService("VirtualInputManager") or nil
-
-local function CreateKey(name, size, pos, keyCode)
+-- Безопасные экранные кнопки (не воруют мобильный джойстик)
+local function CreateSafeButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
     btn.Position = pos
@@ -298,32 +296,16 @@ local function CreateKey(name, size, pos, keyCode)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.TextSize = 16
     btn.Font = Enum.Font.GothamBold
-    btn.AutoButtonColor = false
+    btn.AutoButtonColor = true
+    btn.Active = false
+    btn.Modal = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
-
-    btn.InputBegan:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and vim then
-            btn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
-            pcall(function()
-                vim:SendKeyEvent(true, keyCode, false, game)
-            end)
-        end
-    end)
-
-    btn.InputEnded:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and vim then
-            btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-            pcall(function()
-                vim:SendKeyEvent(false, keyCode, false, game)
-            end)
-        end
-    end)
 end
 
-CreateKey("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50), Enum.KeyCode.Escape)
-CreateKey("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105), Enum.KeyCode.E)
-CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q)
-CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift)
+CreateSafeButton("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50))
+CreateSafeButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
+CreateSafeButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
+CreateSafeButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
 print("Sberbank Hub успешно запущен!")
