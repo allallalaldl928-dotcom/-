@@ -1,4 +1,4 @@
--- SBERBANK HUB [INFINITE YIELD INTEGRATION]
+-- SBERBANK HUB [С ИНТЕГРАЦИЕЙ ФЛАЯ И ФЛИНГА ИЗ INFINITE YIELD]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -26,7 +26,6 @@ ToggleButton.Draggable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
--- Уменьшенная высота меню (видно 3-4 функции)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 260, 0, 210)
 MainFrame.Position = UDim2.new(0.5, -130, 0.5, -105)
@@ -107,7 +106,7 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ ИЗ INFINITE YIELD
+-- 1. ТОЧНЫЙ ФЛИНГ ИЗ INFINITE YIELD
 local flingActive = false
 AddButton("Fling (Infinite Yield)", function(v) flingActive = v end)
 
@@ -133,7 +132,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 2. ФЛАЙ ИЗ INFINITE YIELD
+-- 2. ТОЧНЫЙ ФЛАЙ ИЗ INFINITE YIELD
 local flyKeyDown, flyKeyUp
 local flying = false
 local iySpeed = 50
@@ -391,7 +390,6 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- КНОПКИ УПРАВЛЕНИЯ
 local function CreateIsolatedButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -415,4 +413,4 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
-print("SBERBANK HUB [IY] успешно запущен!")
+print("SBERBANK HUB [IY Fly & Fling] успешно запущен!")
