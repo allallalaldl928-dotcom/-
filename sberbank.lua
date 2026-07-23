@@ -14,7 +14,7 @@ ScreenGui.Name = "SberbankHubGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
--- 1. ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ ХАБА
+-- ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
 ToggleButton.Size = UDim2.new(0, 50, 0, 50)
 ToggleButton.Position = UDim2.new(0, 20, 0, 150)
@@ -27,7 +27,7 @@ ToggleButton.Selectable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
--- 2. ГЛАВНОЕ ОКНО ХАБА
+-- ГЛАВНОЕ ОКНО ХАБА
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 280, 0, 340)
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -170)
@@ -78,7 +78,7 @@ Title.Size = UDim2.new(1, -50, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [POWER FLY]"
+Title.Text = "SBERBANK HUB [FIXED FLING]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 10
 Title.Font = Enum.Font.GothamBold
@@ -145,84 +145,77 @@ local function AddButton(name, callback)
     end)
 end
 
--- 3. ФУНКЦИИ
-
--- Усиленный Флай (Мгновенный подъем и абсолютная сила тяги)
-local iyFlying = false
-local flySpeed = 60
-AddButton("Fly (Усиленный мощный)", function(v)
-    iyFlying = v
+-- 1. ФЛАЙ (Чисто камера + джойстик)
+local flyActive = false
+local flySpeed = 50
+AddButton("Fly (Джойстик и Камера)", function(v)
+    flyActive = v
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum then return end
 
-    if iyFlying then
+    if flyActive then
         hum.PlatformStand = true
         local bv = Instance.new("BodyVelocity")
-        bv.Name = "IY_FlyVelocity"
-        -- Максимальная мощность во все стороны, чтобы персонажа вообще не тянуло вниз
+        bv.Name = "SberFlyVel"
         bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.Parent = hrp
 
         task.spawn(function()
-            while iyFlying and ScreenGui.Parent do
+            while flyActive and ScreenGui.Parent do
                 RunService.RenderStepped:Wait()
-                local currentChar = LocalPlayer.Character
-                if not currentChar then break end
-                local currentHrp = currentChar:FindFirstChild("HumanoidRootPart")
-                local currentHum = currentChar:FindFirstChildOfClass("Humanoid")
-                local activeBv = currentHrp and currentHrp:FindFirstChild("IY_FlyVelocity")
-                if not currentHrp or not currentHum or not activeBv then break end
+                local cChar = LocalPlayer.Character
+                local cHrp = cChar and cChar:FindFirstChild("HumanoidRootPart")
+                local cHum = cChar and cChar:FindFirstChildOfClass("Humanoid")
+                local cBv = cHrp and cHrp:FindFirstChild("SberFlyVel")
+                if not cHrp or not cHum or not cBv then break end
 
-                local camCFrame = Camera.CFrame
-                local moveDir = currentHum.MoveDirection
+                local cam = Workspace.CurrentCamera
+                local moveDir = cHum.MoveDirection
                 
                 if moveDir.Magnitude > 0 then
-                    -- Направление строго по камере и джойстику с учетом наклона вверх/вниз
-                    activeBv.Velocity = (camCFrame.RightVector * moveDir.X + camCFrame.LookVector * moveDir.Z).Unit * flySpeed
+                    cBv.Velocity = (cam.CFrame.RightVector * moveDir.X + cam.CFrame.LookVector * moveDir.Z) * flySpeed
                 else
-                    activeBv.Velocity = Vector3.new(0, 0.1, 0)
+                    cBv.Velocity = Vector3.new(0, 0, 0)
                 end
-                
-                currentHrp.CFrame = CFrame.new(currentHrp.Position, currentHrp.Position + camCFrame.LookVector)
             end
-            if hrp and hrp:FindFirstChild("IY_FlyVelocity") then
-                hrp.IY_FlyVelocity:Destroy()
+            if hrp and hrp:FindFirstChild("SberFlyVel") then
+                hrp.SberFlyVel:Destroy()
             end
         end)
     else
         hum.PlatformStand = false
-        if hrp and hrp:FindFirstChild("IY_FlyVelocity") then
-            hrp.IY_FlyVelocity:Destroy()
+        if hrp and hrp:FindFirstChild("SberFlyVel") then
+            hrp.SberFlyVel:Destroy()
         end
         if hrp then hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end
     end
 end)
 
--- Флинг стоя
-local newFlingActive = false
+-- 2. ФЛИНГ СТОЯ (Исправленный: крутит ровно стоя на земле, без подлетов в небо)
+local flingActive = false
 AddButton("Fling (Стоя)", function(v) 
-    newFlingActive = v 
+    flingActive = v 
     if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         LocalPlayer.Character.HumanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
     end
 end)
 
 RunService.Heartbeat:Connect(function()
-    if newFlingActive and ScreenGui.Parent then
+    if flingActive and ScreenGui.Parent then
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if hrp and hum then
-            hrp.AssemblyAngularVelocity = Vector3.new(0, 700, 0)
+        if hrp then
+            -- Вращение только по оси Y (стоя на месте), убраны лишние прыжки вверх
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 3000, 0)
         end
     end
 end)
 
--- Noclip
+-- 3. NOCLIP
 local noclipActive = false
 AddButton("Noclip", function(v) 
     noclipActive = v 
@@ -240,7 +233,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Speed Hack
+-- 4. SPEED HACK
 local speedActive = false
 AddButton("Speed Hack", function(v) 
     speedActive = v 
@@ -253,7 +246,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- High Jump
+-- 5. HIGH JUMP
 local highJumpActive = false
 AddButton("High Jump", function(v) 
     highJumpActive = v 
