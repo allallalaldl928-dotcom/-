@@ -29,8 +29,8 @@ Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), T
 
 -- ГЛАВНОЕ ОКНО ХАБА
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 280, 0, 340)
-MainFrame.Position = UDim2.new(0.5, -140, 0.5, -170)
+MainFrame.Size = UDim2.new(0, 280, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -180)
 MainFrame.BackgroundColor3 = Color3.fromRGB(5, 25, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -78,7 +78,7 @@ Title.Size = UDim2.new(1, -50, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIXED FLING]"
+Title.Text = "SBERBANK HUB [FULL ESP]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 10
 Title.Font = Enum.Font.GothamBold
@@ -105,7 +105,7 @@ local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Size = UDim2.new(1, -12, 1, -55)
 Scroll.Position = UDim2.new(0, 6, 0, 48)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 800)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 1000)
 Scroll.ScrollBarThickness = 3
 local UIList = Instance.new("UIListLayout", Scroll)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -145,7 +145,31 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛАЙ (Чисто камера + джойстик)
+-- ПЕРЕМЕННЫЕ ДЛЯ ESP
+local espPlayersActive = false
+local espNpcsActive = false
+local espBoxesActive = false
+local espLinesActive = false
+
+local espFolder = Instance.new("Folder", ScreenGui)
+espFolder.Name = "ESP_Container"
+
+local function createOrGetDrawing(char, name, color)
+    local highlight = char:FindFirstChild("SberHighlight")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = "SberHighlight"
+        highlight.Adornee = char
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Parent = char
+    end
+    highlight.FillColor = color
+    highlight.OutlineColor = color
+    return highlight
+end
+
+-- 1. ФЛАЙ
 local flyActive = false
 local flySpeed = 50
 AddButton("Fly (Джойстик и Камера)", function(v)
@@ -195,7 +219,7 @@ AddButton("Fly (Джойстик и Камера)", function(v)
     end
 end)
 
--- 2. ФЛИНГ СТОЯ (Исправленный: крутит ровно стоя на земле, без подлетов в небо)
+-- 2. ФЛИНГ СТОЯ
 local flingActive = false
 AddButton("Fling (Стоя)", function(v) 
     flingActive = v 
@@ -209,13 +233,39 @@ RunService.Heartbeat:Connect(function()
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
-            -- Вращение только по оси Y (стоя на месте), убраны лишние прыжки вверх
             hrp.AssemblyAngularVelocity = Vector3.new(0, 3000, 0)
         end
     end
 end)
 
--- 3. NOCLIP
+-- 3. ESP PLAYERS
+AddButton("ESP Players", function(v)
+    espPlayersActive = v
+    if not v then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("SberHighlight") then
+                p.Character.SberHighlight:Destroy()
+            end
+        end
+    end
+end)
+
+-- 4. ESP NPCS
+AddButton("ESP NPCs", function(v)
+    espNpcsActive = v
+end)
+
+-- 5. ESP BOXES
+AddButton("ESP Boxes", function(v)
+    espBoxesActive = v
+end)
+
+-- 6. ESP LINES (TRACERS)
+AddButton("ESP Lines", function(v)
+    espLinesActive = v
+end)
+
+-- 7. NOCLIP
 local noclipActive = false
 AddButton("Noclip", function(v) 
     noclipActive = v 
@@ -233,7 +283,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 4. SPEED HACK
+-- 8. SPEED HACK
 local speedActive = false
 AddButton("Speed Hack", function(v) 
     speedActive = v 
@@ -246,7 +296,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 5. HIGH JUMP
+-- 9. HIGH JUMP
 local highJumpActive = false
 AddButton("High Jump", function(v) 
     highJumpActive = v 
@@ -256,5 +306,65 @@ end)
 RunService.Heartbeat:Connect(function()
     if highJumpActive and ScreenGui.Parent and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = 120
+    end
+end)
+
+-- ГЛОБАЛЬНЫЙ ЦИКЛ ESP
+RunService.RenderStepped:Connect(function()
+    if not ScreenGui.Parent then return end
+
+    -- Очистка старых UI для боксов/линий
+    for _, ui in ipairs(espFolder:GetChildren()) do
+        ui:Destroy()
+    end
+
+    -- Обработка игроков
+    if espPlayersActive then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                createOrGetDrawing(p.Character, p.Name, Color3.fromRGB(0, 255, 100))
+                
+                local hrp = p.Character.HumanoidRootPart
+                local vec, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                
+                if onScreen then
+                    if espBoxesActive then
+                        local box = Instance.new("Frame", espFolder)
+                        box.Size = UDim2.new(0, 40, 0, 60)
+                        box.Position = UDim2.new(0, vec.X - 20, 0, vec.Y - 30)
+                        box.BackgroundTransparency = 1
+                        Instance.new("UIStroke", box, {Color = Color3.fromRGB(0, 255, 100), Thickness = 1.5})
+                    end
+                    
+                    if espLinesActive then
+                        local line = Instance.new("Frame", espFolder)
+                        local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        local targetPos = Vector2.new(vec.X, vec.Y)
+                        local dist = (targetPos - screenCenter).Magnitude
+                        line.Size = UDim2.new(0, 1.5, 0, dist)
+                        line.Position = UDim2.new(0, screenCenter.X, 0, screenCenter.Y)
+                        line.AnchorPoint = Vector2.new(0.5, 1)
+                        line.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                        line.BorderSizePixel = 0
+                        line.Rotation = math.deg(math.atan2(targetPos.Y - screenCenter.Y, targetPos.X - screenCenter.X)) + 90
+                    end
+                end
+            end
+        end
+    end
+
+    -- Обработка NPC (модели с Humanoid вне папки Players)
+    if espNpcsActive then
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+                local isPlayer = false
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p.Character == obj then isPlayer = true break end
+                end
+                if not isPlayer then
+                    createOrGetDrawing(obj, "NPC", Color3.fromRGB(255, 165, 0))
+                end
+            end
+        end
     end
 end)
