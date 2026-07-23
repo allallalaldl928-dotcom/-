@@ -1,8 +1,9 @@
--- SBERBANK HUB [COMPACT IY EDITION]
+-- SBERBANK HUB [INFINITE YIELD INTEGRATION]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -25,7 +26,7 @@ ToggleButton.Draggable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
--- Уменьшена высота меню (теперь видно ровно 3-4 функции)
+-- Уменьшенная высота меню (видно 3-4 функции)
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 260, 0, 210)
 MainFrame.Position = UDim2.new(0.5, -130, 0.5, -105)
@@ -55,7 +56,7 @@ Title.Size = UDim2.new(1, -16, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [COMPACT]"
+Title.Text = "SBERBANK HUB [IY]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 11
 Title.Font = Enum.Font.GothamBold
@@ -106,7 +107,7 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ
+-- 1. ФЛИНГ ИЗ INFINITE YIELD
 local flingActive = false
 AddButton("Fling (Infinite Yield)", function(v) flingActive = v end)
 
@@ -132,95 +133,75 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 2. ФЛАЙ
-local flyActive = false
-local flySpeed = 50
-local flyUpState = false
-local flyDownState = false
-local bv, bg
-
-local flyUpBtn = Instance.new("TextButton", ScreenGui)
-flyUpBtn.Size = UDim2.new(0, 55, 0, 45)
-flyUpBtn.Position = UDim2.new(1, -70, 0.4, 0)
-flyUpBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 60)
-flyUpBtn.BackgroundTransparency = 0.3
-flyUpBtn.Text = "Вверх"
-flyUpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyUpBtn.TextSize = 13
-flyUpBtn.Font = Enum.Font.GothamBold
-flyUpBtn.Visible = false
-Instance.new("UICorner", flyUpBtn).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", flyUpBtn, {Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5})
-
-flyUpBtn.MouseButton1Down:Connect(function() flyUpState = true end)
-flyUpBtn.MouseButton1Up:Connect(function() flyUpState = false end)
-flyUpBtn.MouseLeave:Connect(function() flyUpState = false end)
-
-local flyDownBtn = Instance.new("TextButton", ScreenGui)
-flyDownBtn.Size = UDim2.new(0, 55, 0, 45)
-flyDownBtn.Position = UDim2.new(1, -70, 0.4, 50)
-flyDownBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
-flyDownBtn.BackgroundTransparency = 0.3
-flyDownBtn.Text = "Вниз"
-flyDownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyDownBtn.TextSize = 13
-flyDownBtn.Font = Enum.Font.GothamBold
-flyDownBtn.Visible = false
-Instance.new("UICorner", flyDownBtn).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", flyDownBtn, {Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5})
-
-flyDownBtn.MouseButton1Down:Connect(function() flyDownState = true end)
-flyDownBtn.MouseButton1Up:Connect(function() flyDownState = false end)
-flyDownBtn.MouseLeave:Connect(function() flyDownState = false end)
+-- 2. ФЛАЙ ИЗ INFINITE YIELD
+local flyKeyDown, flyKeyUp
+local flying = false
+local iySpeed = 50
 
 AddButton("Fly (Infinite Yield)", function(v)
-    flyActive = v
-    flyUpBtn.Visible = v
-    flyDownBtn.Visible = v
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if flyActive then
-        if hum then hum.PlatformStand = true end
-        if hrp then
+    local character = LocalPlayer.Character
+    if not character then return end
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not rootPart or not humanoid then return end
+
+    if not v and flying then
+        flying = false
+        humanoid.PlatformStand = false
+        if flyKeyDown then flyKeyDown:Disconnect() end
+        if flyKeyUp then flyKeyUp:Disconnect() end
+        return
+    elseif v and not flying then
+        flying = true
+        humanoid.PlatformStand = true
+
+        local bv = Instance.new("BodyVelocity", rootPart)
+        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bv.Velocity = Vector3.new(0, 0, 0)
+
+        local bg = Instance.new("BodyGyro", rootPart)
+        bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.CFrame = rootPart.CFrame
+
+        local ctrl = {f = 0, b = 0, l = 0, r = 0}
+        local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+
+        flyKeyDown = UserInputService.InputBegan:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.W then ctrl.f = 1
+            elseif input.KeyCode == Enum.KeyCode.S then ctrl.b = -1
+            elseif input.KeyCode == Enum.KeyCode.A then ctrl.l = -1
+            elseif input.KeyCode == Enum.KeyCode.D then ctrl.r = 1
+            end
+        end)
+
+        flyKeyUp = UserInputService.InputEnded:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.W then ctrl.f = 0
+            elseif input.KeyCode == Enum.KeyCode.S then ctrl.b = 0
+            elseif input.KeyCode == Enum.KeyCode.A then ctrl.l = 0
+            elseif input.KeyCode == Enum.KeyCode.D then ctrl.r = 0
+            end
+        end)
+
+        task.spawn(function()
+            while flying do
+                RunService.RenderStepped:Wait()
+                if not rootPart.Parent or not humanoid.Parent then break end
+                if ctrl.f + ctrl.b ~= 0 or ctrl.l + ctrl.r ~= 0 then
+                    bv.Velocity = ((Camera.CFrame.LookVector * (ctrl.f + ctrl.b)) + ((Camera.CFrame * CFrame.new(ctrl.l + ctrl.r, (ctrl.f + ctrl.b) * 0.2, 0).Position) - Camera.CFrame.Position)) * iySpeed
+                    lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+                elseif lastctrl.f + lastctrl.b ~= 0 or lastctrl.l + lastctrl.r ~= 0 then
+                    bv.Velocity = ((Camera.CFrame.LookVector * (lastctrl.f + lastctrl.b)) + ((Camera.CFrame * CFrame.new(lastctrl.l + lastctrl.r, (lastctrl.f + lastctrl.b) * 0.2, 0).Position) - Camera.CFrame.Position)) * iySpeed
+                else
+                    bv.Velocity = Vector3.new(0, 0, 0)
+                end
+                bg.CFrame = Camera.CFrame
+            end
+            ctrl = {f = 0, b = 0, l = 0, r = 0}
+            lastctrl = {f = 0, b = 0, l = 0, r = 0}
             if bv then bv:Destroy() end
             if bg then bg:Destroy() end
-            bv = Instance.new("BodyVelocity", hrp)
-            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-            bv.Velocity = Vector3.new(0, 0, 0)
-            bg = Instance.new("BodyGyro", hrp)
-            bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-            bg.CFrame = hrp.CFrame
-        end
-    else
-        if hum then hum.PlatformStand = false end
-        if bv then bv:Destroy() bv = nil end
-        if bg then bg:Destroy() bg = nil end
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if flyActive and LocalPlayer.Character then
-        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hrp and hum and bv and bg then
-            bg.CFrame = Camera.CFrame
-            local moveDir = hum.MoveDirection
-            local velocity = Vector3.new(0, 0, 0)
-            
-            if moveDir.Magnitude > 0 then
-                velocity = (Camera.CFrame.RightVector * moveDir.X + Camera.CFrame.LookVector * moveDir.Z) * flySpeed
-            end
-            
-            if flyUpState then
-                velocity = velocity + Vector3.new(0, flySpeed, 0)
-            elseif flyDownState then
-                velocity = velocity + Vector3.new(0, -flySpeed, 0)
-            end
-            
-            bv.Velocity = velocity
-        end
+            if humanoid then humanoid.PlatformStand = false end
+        end)
     end
 end)
 
@@ -410,7 +391,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- КНОПКИ УПРАВЛЕНИЯ (БЕЗ ЛКМ/ПКМ)
+-- КНОПКИ УПРАВЛЕНИЯ
 local function CreateIsolatedButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -434,4 +415,4 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
-print("SBERBANK HUB [COMPACT IY] успешно запущен!")
+print("SBERBANK HUB [IY] успешно запущен!")
