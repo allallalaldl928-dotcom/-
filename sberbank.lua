@@ -1,4 +1,4 @@
--- SBERBANK HUB [FINAL MOBILE FIX: ИКОНКА НА МЕСТЕ, КНОПКИ E/Q НЕ ЛОМАЮТ КАМЕРУ]
+-- SBERBANK HUB [STABLE VERSION]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -17,7 +17,6 @@ ScreenGui.Name = "SberbankHubGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
--- 1. ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ ХАБА (ГАРАНТИРОВАННО ВИДНА СЛЕВА СУДЯ ПО КООРДИНАТАМ)
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
 ToggleButton.Size = UDim2.new(0, 50, 0, 50)
 ToggleButton.Position = UDim2.new(0, 20, 0, 150)
@@ -30,7 +29,6 @@ ToggleButton.Selectable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
--- 2. ГЛАВНОЕ ОКНО ХАБА
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 280, 0, 340)
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -170)
@@ -60,7 +58,7 @@ Title.Size = UDim2.new(1, -16, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIXED]"
+Title.Text = "SBERBANK HUB"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 11
 Title.Font = Enum.Font.GothamBold
@@ -111,10 +109,9 @@ local function AddButton(name, callback)
     end)
 end
 
--- 3. ВСЕ ФУНКЦИИ
+-- Fly
 local newFlying = false
 local flyKeys = {W = false, S = false, A = false, D = false, Space = false, Shift = false}
-
 AddButton("Fly (Управляемый)", function(v)
     newFlying = v
     local char = LocalPlayer.Character
@@ -175,6 +172,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- Fling
 local newFlingActive = false
 AddButton("Fling (Раскидывание)", function(v) newFlingActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -188,6 +186,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- Noclip
 local noclipActive = false
 AddButton("Noclip (Сквозь стены)", function(v) noclipActive = v end)
 RunService.Stepped:Connect(function()
@@ -198,6 +197,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
+-- Speed
 local speedActive = false
 AddButton("Speed Hack (Скорость)", function(v) speedActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -206,6 +206,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- High Jump
 local highJumpActive = false
 AddButton("High Jump (Прыжок)", function(v) highJumpActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -214,6 +215,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- ESP Box & Lines & Names & Roles
 local espBoxActive = false
 local boxObjects = {}
 AddButton("ESP Box", function(v) espBoxActive = v end)
@@ -346,6 +348,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- Freeze
 local freezeActive = false
 AddButton("Freeze (Заморозка)", function(v) freezeActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -368,7 +371,7 @@ AddButton("Bring All Items (Лут)", function()
     end
 end)
 
--- 4. ТОЛЬКО БЕЗОПАСНЫЕ КНОПКИ E, Q, Shift (БЕЗ ГИФТА, БЕЗ ЗАЖАТИЯ КАМЕРЫ ЧЕРЕЗ VIM)
+-- Экранные кнопки E, Q, Shift
 local function CreateScreenButton(name, size, pos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -381,7 +384,7 @@ local function CreateScreenButton(name, size, pos, callback)
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = true
     btn.Active = true
-    btn.Modal = false -- ГЛАВНОЕ: Не захватывает фокус мыши и не ломает управление камерой!
+    btn.Modal = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
     
@@ -389,25 +392,23 @@ local function CreateScreenButton(name, size, pos, callback)
     return btn
 end
 
--- Кнопка E (Мгновенный тап без зависания управления)
 CreateScreenButton("E", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, 0), function()
     pcall(function()
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
         task.wait(0.02)
+        VirtualInputManager:Layer=1
         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
     end)
 end)
 
--- Кнопка Q
 CreateScreenButton("Q", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, -55), function()
     pcall(function()
-        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+        VirtualInputManager:SendKeyevent(true, Enum.KeyCode.Q, false, game)
         task.wait(0.02)
         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
     end)
 end)
 
--- Кнопка Shift (Бег)
 CreateScreenButton("Shift", UDim2.new(0, 55, 0, 45), UDim2.new(1, -125, 0.45, 0), function()
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then
