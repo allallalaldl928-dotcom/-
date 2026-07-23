@@ -1,8 +1,9 @@
--- SBERBANK HUB [ULTIMATE MOBILE FIX]
+-- SBERBANK HUB [ULTIMATE MOBILE FIX + LKM/PKM + ROLE ESP]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -65,7 +66,7 @@ local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Size = UDim2.new(1, -12, 1, -60)
 Scroll.Position = UDim2.new(0, 6, 0, 54)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 1150)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 1250)
 Scroll.ScrollBarThickness = 3
 local UIList = Instance.new("UIListLayout", Scroll)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -184,7 +185,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 5-8. ЕСП
+-- 5-8. ЕСП + РОЛИ
 local espBoxActive = false
 local boxObjects = {}
 AddButton("ESP Box (Игроки)", function(v) espBoxActive = v end)
@@ -197,6 +198,10 @@ local espPlayerNames = false
 local nameObjects = {}
 AddButton("ESP Player (Никнеймы)", function(v) espPlayerNames = v end)
 
+local espRolesActive = false
+local roleObjects = {}
+AddButton("ESP Roles (Роли игроков)", function(v) espRolesActive = v end)
+
 local espNpcActive = false
 local npcObjects = {}
 AddButton("ESP NPC", function(v) espNpcActive = v end)
@@ -205,21 +210,46 @@ RunService.RenderStepped:Connect(function()
     for _, o in pairs(boxObjects) do if o then o:Remove() end end boxObjects = {}
     for _, o in pairs(lineObjects) do if o then o:Remove() end end lineObjects = {}
     for _, o in pairs(nameObjects) do if o then o:Remove() end end nameObjects = {}
-    for _, o in pairs(npcObjects) do if o then o:Remove() end end npcObjects = {}
+    for _, o in pairs(roleObjects) do if o then o:Remove() end end roleObjects = {}
 
-    if espBoxActive or espLinesActive or espPlayerNames then
+    if espBoxActive or espLinesActive or espPlayerNames or espRolesActive then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") then
                 local hrp = plr.Character.HumanoidRootPart
                 local head = plr.Character.Head
                 local vec, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                
+                -- Определение роли (по оружию в руках или рюкзаке)
+                local roleColor = Color3.fromRGB(0, 255, 128) -- По умолчанию мирный
+                local roleText = "Игрок"
+                
+                local char = plr.Character
+                local backpack = plr:FindFirstChildOfClass("Backpack")
+                
+                local function checkTool(t)
+                    if not t then return end
+                    local name = t.Name:lower()
+                    if name:find("gun") or name:find("pistol") or name:find("revolver") or name:find("шериф") then
+                        roleColor = Color3.fromRGB(0, 150, 255) -- Шериф (Синий)
+                        roleText = "Шериф"
+                    elseif name:find("knife") or name:find("sword") or name:find("dagger") or name:find("убийца") or name:find("murder") then
+                        roleColor = Color3.fromRGB(255, 50, 50) -- Убийца (Красный)
+                        roleText = "Убийца"
+                    end
+                end
+                
+                if char:FindFirstChildOfClass("Tool") then checkTool(char:FindFirstChildOfClass("Tool")) end
+                if backpack then
+                    for _, t in ipairs(backpack:GetChildren()) do checkTool(t) end
+                end
+
                 if onScreen then
                     if espLinesActive then
                         local l = Drawing.new("Line")
                         l.Visible = true
                         l.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
                         l.To = Vector2.new(vec.X, vec.Y)
-                        l.Color = Color3.fromRGB(0, 255, 128)
+                        l.Color = roleColor
                         l.Thickness = 1
                         table.insert(lineObjects, l)
                     end
@@ -232,7 +262,7 @@ RunService.RenderStepped:Connect(function()
                         b.Visible = true
                         b.Size = Vector2.new(w, h)
                         b.Position = Vector2.new(top.X - w/2, top.Y)
-                        b.Color = Color3.fromRGB(0, 255, 128)
+                        b.Color = roleColor
                         b.Thickness = 1
                         b.Filled = false
                         table.insert(boxObjects, b)
@@ -248,6 +278,18 @@ RunService.RenderStepped:Connect(function()
                         local top = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.2, 0))
                         t.Position = Vector2.new(top.X, top.Y)
                         table.insert(nameObjects, t)
+                    end
+                    if espRolesActive then
+                        local r = Drawing.new("Text")
+                        r.Visible = true
+                        r.Text = "[" .. roleText .. "]"
+                        r.Size = 13
+                        r.Center = true
+                        r.Outline = true
+                        r.Color = roleColor
+                        local top = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 2.3, 0))
+                        r.Position = Vector2.new(top.X, top.Y)
+                        table.insert(roleObjects, r)
                     end
                 end
             end
@@ -300,6 +342,7 @@ local function CreateIsolatedButton(name, size, pos)
     btn.Selectable = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
+    return btn
 end
 
 CreateIsolatedButton("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50))
@@ -307,4 +350,25 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
-print("Sberbank Hub запущен без потери джойстика!")
+-- КНОПКИ ЛКМ и ПКМ (нажатие по центру экрана)
+local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 75, 0, 50), UDim2.new(1, -90, 0.7, 0))
+local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 75, 0, 50), UDim2.new(1, -90, 0.7, 60))
+
+local function ClickCenter(buttonEnum)
+    local viewport = Camera.ViewportSize
+    local centerX = viewport.X / 2
+    local centerY = viewport.Y / 2
+    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, buttonEnum, true, game, 0)
+    task.wait(0.05)
+    VirtualInputManager:SendMouseButtonEvent(centerX, centerY, buttonEnum, false, game, 0)
+end
+
+lkmBtn.MouseButton1Click:Connect(function()
+    ClickCenter(0) -- 0 это ЛКМ
+end)
+
+pkmBtn.MouseButton1Click:Connect(function()
+    ClickCenter(1) -- 1 это ПКМ
+end)
+
+print("SBERBANK HUB успешно обновлен (ЛКМ/ПКМ по центру + ESP ролей)!")
