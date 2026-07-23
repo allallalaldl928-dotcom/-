@@ -50,12 +50,10 @@ BgGradient.Color = ColorSequence.new({
 })
 BgGradient.Rotation = 45
 
--- Надежное открытие/закрытие для мобильных
 ToggleButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         local startPos = input.Position
         local moved = false
-        
         local connection
         connection = input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
@@ -65,7 +63,6 @@ ToggleButton.InputBegan:Connect(function(input)
                 end
             end
         end)
-        
         task.spawn(function()
             while input.UserInputState == Enum.UserInputState.Begin do
                 if (input.Position - startPos).Magnitude > 10 then
@@ -83,14 +80,13 @@ Title.Size = UDim2.new(1, -50, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [ULTIMATE]"
+Title.Text = "SBERBANK HUB [IY STYLE]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 10
 Title.Font = Enum.Font.GothamBold
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", Title, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
 
--- КНОПКА ПОЛНОГО ЗАКРЫТИЯ СКРИПТА (Х)
 local CloseButton = Instance.new("TextButton", MainFrame)
 CloseButton.Size = UDim2.new(0, 32, 0, 32)
 CloseButton.Position = UDim2.new(1, -40, 0, 8)
@@ -153,22 +149,21 @@ end
 
 -- 3. ФУНКЦИИ
 
--- Флай с поддержкой джойстика по высоте
-local newFlying = false
-local flyKeys = {W = false, S = false, A = false, D = false, Space = false, Shift = false}
-
-AddButton("Fly (Джойстик Вверх/Вниз)", function(v)
-    newFlying = v
+-- Флай в стиле Infinite Yield (управление полностью через джойстик и камеру)
+local iyFlying = false
+local flySpeed = 50
+AddButton("Fly (Infinite Yield Style)", function(v)
+    iyFlying = v
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum then return end
 
-    if newFlying then
+    if iyFlying then
         hum.PlatformStand = true
         task.spawn(function()
-            while newFlying and ScreenGui.Parent do
+            while iyFlying and ScreenGui.Parent do
                 RunService.RenderStepped:Wait()
                 local currentChar = LocalPlayer.Character
                 if not currentChar then break end
@@ -176,30 +171,19 @@ AddButton("Fly (Джойстик Вверх/Вниз)", function(v)
                 local currentHum = currentChar:FindFirstChildOfClass("Humanoid")
                 if not currentHrp or not currentHum then break end
 
-                local moveVec = Vector3.new(0, 0, 0)
-                local look = Camera.CFrame.LookVector
-                local right = Camera.CFrame.RightVector
+                local camCFrame = Camera.CFrame
+                local moveDir = currentHum.MoveDirection
                 
-                if currentHum.MoveDirection.Magnitude > 0 then
-                    local camLookFlat = Vector3.new(look.X, 0, look.Z).Unit
-                    local camRightFlat = Vector3.new(right.X, 0, right.Z).Unit
-                    local rel = currentHum.MoveDirection
-                    moveVec = moveVec + (camLookFlat * -rel.Z) + (camRightFlat * rel.X)
-                end
-                
-                if flyKeys.Space or currentHum.MoveDirection.Y > 0.1 then 
-                    moveVec = moveVec + Vector3.new(0, 1, 0) 
-                end
-                if flyKeys.Shift then 
-                    moveVec = moveVec - Vector3.new(0, 1, 0) 
-                end
-                
-                if moveVec.Magnitude > 0 then
-                    currentHrp.AssemblyLinearVelocity = moveVec.Unit * 60
+                -- Логика IY: куда отклонен джойстик относительно камеры, туда и летим
+                local velocity = Vector3.new(0, 0, 0)
+                if moveDir.Magnitude > 0 then
+                    velocity = (camCFrame.RightVector * moveDir.X + camCFrame.LookVector * moveDir.Z).Unit * flySpeed
                 else
-                    currentHrp.AssemblyLinearVelocity = Vector3.new(0, 0.1, 0)
+                    velocity = Vector3.new(0, 0.1, 0) -- Зависание на месте
                 end
-                currentHrp.CFrame = CFrame.new(currentHrp.Position, currentHrp.Position + look)
+                
+                currentHrp.AssemblyLinearVelocity = velocity
+                currentHrp.CFrame = CFrame.new(currentHrp.Position, currentHrp.Position + camCFrame.LookVector)
             end
         end)
     else
@@ -208,38 +192,18 @@ AddButton("Fly (Джойстик Вверх/Вниз)", function(v)
     end
 end)
 
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.W then flyKeys.W = true
-    elseif input.KeyCode == Enum.KeyCode.S then flyKeys.S = true
-    elseif input.KeyCode == Enum.KeyCode.A then flyKeys.A = true
-    elseif input.KeyCode == Enum.KeyCode.D then flyKeys.D = true
-    elseif input.KeyCode == Enum.KeyCode.Space then flyKeys.Space = true
-    elseif input.KeyCode == Enum.KeyCode.LeftShift then flyKeys.Shift = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.W then flyKeys.W = false
-    elseif input.KeyCode == Enum.KeyCode.S then flyKeys.S = false
-    elseif input.KeyCode == Enum.KeyCode.A then flyKeys.A = false
-    elseif input.KeyCode == Enum.KeyCode.D then flyKeys.D = false
-    elseif input.KeyCode == Enum.KeyCode.Space then flyKeys.Space = false
-    elseif input.KeyCode == Enum.KeyCode.LeftShift then flyKeys.Shift = false
-    end
-end)
-
--- Флинг (Спин со скоростью 700)
+-- Стабильный Флинг (Спин 700 на месте без улетаний)
 local newFlingActive = false
-AddButton("Fling (Спин 700)", function(v) newFlingActive = v end)
+AddButton("Fling (Спин 700 на месте)", function(v) newFlingActive = v end)
 
 RunService.Heartbeat:Connect(function()
     if newFlingActive and ScreenGui.Parent then
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if hrp then
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hrp and hum then
             hrp.AssemblyAngularVelocity = Vector3.new(0, 700, 0)
-            hrp.AssemblyLinearVelocity = Vector3.new(math.random(-150, 150), 100, math.random(-150, 150))
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 2, 0) -- Жесткая стабилизация на месте
         end
     end
 end)
@@ -442,7 +406,7 @@ AddButton("Bring All Items (Лут)", function()
 end)
 
 -- 4. КНОПКИ УПРАВЛЕНИЯ E, Q, Shift ДЛЯ МОБИЛЬНЫХ
-local function CreateScreenButton(name, size, pos, callback)
+local function CreateScreenButton(name, size, pos, callbackDown, callbackUp)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
     btn.Position = pos
@@ -450,7 +414,7 @@ local function CreateScreenButton(name, size, pos, callback)
     btn.BackgroundTransparency = 0.3
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 14
+    btn.TextSize = 13
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = true
     btn.Active = false
@@ -458,29 +422,33 @@ local function CreateScreenButton(name, size, pos, callback)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
     
-    btn.Activated:Connect(callback)
+    if callbackDown then
+        btn.MouseButton1Down:Connect(callbackDown)
+        btn.TouchStarted:Connect(callbackDown)
+    end
+    if callbackUp then
+        btn.MouseButton1Up:Connect(callbackUp)
+        btn.TouchEnded:Connect(callbackUp)
+    end
     return btn
 end
 
-CreateScreenButton("E", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, 0), function()
-    pcall(function()
-        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-        task.wait(0.05)
-        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-    end)
+-- Кнопка E
+CreateScreenButton("E", UDim2.new(0, 42, 0, 42), UDim2.new(1, -55, 0.45, 0), function()
+    pcall(function() VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game) end)
+end, function()
+    pcall(function() VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game) end)
 end)
 
-CreateScreenButton("Q", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, -55), function()
-    pcall(function()
-        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
-        task.wait(0.05)
-        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
-    end)
+-- Кнопка Q
+CreateScreenButton("Q", UDim2.new(0, 42, 0, 42), UDim2.new(1, -55, 0.45, -50), function()
+    pcall(function() VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game) end)
+end, function()
+    pcall(function() VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game) end)
 end)
 
-CreateScreenButton("Shift", UDim2.new(0, 55, 0, 45), UDim2.new(1, -125, 0.45, 0), function()
+-- Кнопка Shift
+CreateScreenButton("Shift", UDim2.new(0, 50, 0, 42), UDim2.new(1, -112, 0.45, 0), function()
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.WalkSpeed = (hum.WalkSpeed == 16) and 24 or 16
-    end
+    if hum then hum.WalkSpeed = (hum.WalkSpeed == 16) and 24 or 16 end
 end)
