@@ -1,4 +1,4 @@
--- SBERBANK HUB [FINAL FLY & UI FIX]
+-- SBERBANK HUB [IY FLING + BHOP + HIGH JUMP]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -55,7 +55,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIXED]"
+Title.Text = "SBERBANK HUB [MAX]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -106,24 +106,71 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ ВЛЕВО
+-- 1. ТОЧНЫЙ ОРИГИНАЛЬНЫЙ ФЛИНГ ИЗ INFINITY YIELD
 local flingActive = false
-AddButton("Fling Влево (Ровно на ногах)", function(v) flingActive = v end)
+AddButton("Fling (IY Стиль)", function(v) flingActive = v end)
+
 RunService.Heartbeat:Connect(function()
-    if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, hrp.CFrame.Rotation.Y - 0.5, 0)
-        hrp.AssemblyAngularVelocity = Vector3.new(0, -30000, 0)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 25, 0)
+    if flingActive then
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if root and hum then
+            local vel = root.AssemblyLinearVelocity
+            root.AssemblyLinearVelocity = Vector3.new(0, 3000, 0) + Vector3.new(vel.X, 0, vel.Z)
+            RunService.RenderStepped:Wait()
+            if root then
+                root.AssemblyLinearVelocity = Vector3.new(0, -3000, 0) + Vector3.new(vel.X, 0, vel.Z)
+                root.CFrame = root.CFrame * CFrame.Angles(math.rad(math.random(-360, 360)), math.rad(math.random(-360, 360)), math.rad(math.random(-360, 360)))
+            end
+        end
     end
 end)
 
--- 2. ИСПРАВЛЕННЫЙ ФЛАЙ (Без инверсии и без прыжков)
+-- 2. ФЛАЙ КАК В INFINITY YIELD
 local flyActive = false
 local flySpeed = 50
+local flyUpState = false
+local flyDownState = false
 local bv, bg
-AddButton("Fly (Прямой полет за камерой)", function(v)
+
+local flyUpBtn = Instance.new("TextButton", ScreenGui)
+flyUpBtn.Size = UDim2.new(0, 55, 0, 45)
+flyUpBtn.Position = UDim2.new(1, -70, 0.4, 0)
+flyUpBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 60)
+flyUpBtn.BackgroundTransparency = 0.3
+flyUpBtn.Text = "Вверх"
+flyUpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyUpBtn.TextSize = 13
+flyUpBtn.Font = Enum.Font.GothamBold
+flyUpBtn.Visible = false
+Instance.new("UICorner", flyUpBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", flyUpBtn, {Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5})
+
+flyUpBtn.MouseButton1Down:Connect(function() flyUpState = true end)
+flyUpBtn.MouseButton1Up:Connect(function() flyUpState = false end)
+flyUpBtn.MouseLeave:Connect(function() flyUpState = false end)
+
+local flyDownBtn = Instance.new("TextButton", ScreenGui)
+flyDownBtn.Size = UDim2.new(0, 55, 0, 45)
+flyDownBtn.Position = UDim2.new(1, -70, 0.4, 50)
+flyDownBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+flyDownBtn.BackgroundTransparency = 0.3
+flyDownBtn.Text = "Вниз"
+flyDownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyDownBtn.TextSize = 13
+flyDownBtn.Font = Enum.Font.GothamBold
+flyDownBtn.Visible = false
+Instance.new("UICorner", flyDownBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", flyDownBtn, {Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5})
+
+flyDownBtn.MouseButton1Down:Connect(function() flyDownState = true end)
+flyDownBtn.MouseButton1Up:Connect(function() flyDownState = false end)
+flyDownBtn.MouseLeave:Connect(function() flyDownState = false end)
+
+AddButton("Fly (Infinite Yield Стиль)", function(v)
     flyActive = v
+    flyUpBtn.Visible = v
+    flyDownBtn.Visible = v
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -155,14 +202,17 @@ RunService.RenderStepped:Connect(function()
             bg.CFrame = Camera.CFrame
             local moveDir = hum.MoveDirection
             local velocity = Vector3.new(0, 0, 0)
+            
             if moveDir.Magnitude > 0 then
-                -- Прямое векторное умножение без инверсии
-                velocity = Camera.CFrame.LookVector * (moveDir.Z * -flySpeed) + Camera.CFrame.RightVector * (moveDir.X * flySpeed)
-                -- Дополнительно страхуем через стандартный пересчет направления джойстика
-                local flatLook = Vector3.new(Camera.CFrame.LookVector.X, 0, Camera.CFrame.LookVector.Z).Unit
-                local flatRight = Vector3.new(Camera.CFrame.RightVector.X, 0, Camera.CFrame.RightVector.Z).Unit
-                velocity = (flatLook * moveDir.Z + flatRight * moveDir.X) * flySpeed + Vector3.new(0, moveDir.Y * flySpeed, 0)
+                velocity = (Camera.CFrame.RightVector * moveDir.X + Camera.CFrame.LookVector * moveDir.Z) * flySpeed
             end
+            
+            if flyUpState then
+                velocity = velocity + Vector3.new(0, flySpeed, 0)
+            elseif flyDownState then
+                velocity = velocity + Vector3.new(0, -flySpeed, 0)
+            end
+            
             bv.Velocity = velocity
         end
     end
@@ -177,7 +227,34 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 4. НОКЛИП
+-- 4. ВЫСОКИЙ ПРЫЖОК (HIGH JUMP)
+local highJumpActive = false
+AddButton("High Jump (Высокий прыжок)", function(v) highJumpActive = v end)
+RunService.Heartbeat:Connect(function()
+    if highJumpActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = 120
+    else
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = 50
+        end
+    end
+end)
+
+-- 5. БАНИХОП (BHOP)
+local bhopActive = false
+AddButton("Bhop (Авто-прыжок при беге)", function(v) bhopActive = v end)
+RunService.Heartbeat:Connect(function()
+    if bhopActive and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum and hum.MoveDirection.Magnitude > 0 then
+            if hum.FloorMaterial ~= Enum.Material.Air then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+end)
+
+-- 6. НОКЛИП
 local noclipActive = false
 AddButton("Noclip (Проход сквозь стены)", function(v) noclipActive = v end)
 RunService.Stepped:Connect(function()
@@ -190,7 +267,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 5-8. ЕСП + РОЛИ
+-- 7-10. ЕСП + РОЛИ
 local espBoxActive = false
 local boxObjects = {}
 AddButton("ESP Box (Игроки)", function(v) espBoxActive = v end)
@@ -297,7 +374,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 9. ФРИЗ
+-- 11. ФРИЗ
 local freezeActive = false
 AddButton("Freeze (Заморозить игроков)", function(v) freezeActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -316,7 +393,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 10. БРИНГ ЛУТА
+-- 12. БРИНГ ЛУТА
 AddButton("Bring All Items (Собрать лут)", function()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -351,7 +428,6 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
--- СМЕЩЕННЫЕ КНОПКИ ЛКМ и ПКМ (чтобы не загораживали центр экрана)
 local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 65, 0, 45), UDim2.new(0.3, 0, 1, -60))
 local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 65, 0, 45), UDim2.new(0.5, 0, 1, -60))
 
@@ -364,12 +440,7 @@ local function ClickCenter(buttonEnum)
     VirtualInputManager:SendMouseButtonEvent(centerX, centerY, buttonEnum, false, game, 0)
 end
 
-lkmBtn.MouseButton1Click:Connect(function()
-    ClickCenter(0)
-end)
+lkmBtn.MouseButton1Click:Connect(function() ClickCenter(0) end)
+pkmBtn.MouseButton1Click:Connect(function() ClickCenter(1) end)
 
-pkmBtn.MouseButton1Click:Connect(function()
-    ClickCenter(1)
-end)
-
-print("SBERBANK HUB [FINAL FLY & UI FIX] успешно запущен!")
+print("SBERBANK HUB [MAX VERSION] успешно запущен!")
