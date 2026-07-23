@@ -1,9 +1,10 @@
--- SBERBANK HUB [ПОЛНАЯ ВЕРСИЯ СО ВСЕМИ ФУНКЦИЯМИ И МОБИЛЬНЫМИ КНОПКАМИ]
+-- SBERBANK HUB [FINAL MOBILE FIX: ИКОНКА НА МЕСТЕ, КНОПКИ E/Q НЕ ЛОМАЮТ КАМЕРУ]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -16,14 +17,16 @@ ScreenGui.Name = "SberbankHubGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
--- 1. ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ ХАБА
+-- 1. ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ ХАБА (ГАРАНТИРОВАННО ВИДНА СЛЕВА СУДЯ ПО КООРДИНАТАМ)
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
-ToggleButton.Size = UDim2.new(0, 45, 0, 45)
-ToggleButton.Position = UDim2.new(0, 20, 0, 200)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Position = UDim2.new(0, 20, 0, 150)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 130, 65)
 ToggleButton.Image = "rbxassetid://18828254115"
 ToggleButton.ScaleType = Enum.ScaleType.Crop
 ToggleButton.Draggable = true
+ToggleButton.Active = true
+ToggleButton.Selectable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
@@ -57,7 +60,7 @@ Title.Size = UDim2.new(1, -16, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [ALL FUNCTIONS]"
+Title.Text = "SBERBANK HUB [FIXED]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 11
 Title.Font = Enum.Font.GothamBold
@@ -68,7 +71,7 @@ local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Size = UDim2.new(1, -12, 1, -55)
 Scroll.Position = UDim2.new(0, 6, 0, 48)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 950)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 1000)
 Scroll.ScrollBarThickness = 3
 local UIList = Instance.new("UIListLayout", Scroll)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -108,7 +111,7 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛАЙ
+-- 3. ВСЕ ФУНКЦИИ
 local newFlying = false
 local flyKeys = {W = false, S = false, A = false, D = false, Space = false, Shift = false}
 
@@ -172,7 +175,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- 2. ФЛИНГ
 local newFlingActive = false
 AddButton("Fling (Раскидывание)", function(v) newFlingActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -186,7 +188,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 3. НОКЛИП
 local noclipActive = false
 AddButton("Noclip (Сквозь стены)", function(v) noclipActive = v end)
 RunService.Stepped:Connect(function()
@@ -197,7 +198,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- 4. СПИДХАК
 local speedActive = false
 AddButton("Speed Hack (Скорость)", function(v) speedActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -206,7 +206,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 5. ВЫСОКИЙ ПРЫЖОК
 local highJumpActive = false
 AddButton("High Jump (Прыжок)", function(v) highJumpActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -215,7 +214,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 6-10. ESP ФУНКЦИИ
 local espBoxActive = false
 local boxObjects = {}
 AddButton("ESP Box", function(v) espBoxActive = v end)
@@ -348,7 +346,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 11. ФРИЗ
 local freezeActive = false
 AddButton("Freeze (Заморозка)", function(v) freezeActive = v end)
 RunService.Heartbeat:Connect(function()
@@ -361,7 +358,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 12. БРИНГ ЛУТА
 AddButton("Bring All Items (Лут)", function()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -372,7 +368,7 @@ AddButton("Bring All Items (Лут)", function()
     end
 end)
 
--- 3. ЭКРАННЫЕ КНОПКИ (E, Q, Shift, Gift)
+-- 4. ТОЛЬКО БЕЗОПАСНЫЕ КНОПКИ E, Q, Shift (БЕЗ ГИФТА, БЕЗ ЗАЖАТИЯ КАМЕРЫ ЧЕРЕЗ VIM)
 local function CreateScreenButton(name, size, pos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -385,6 +381,7 @@ local function CreateScreenButton(name, size, pos, callback)
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = true
     btn.Active = true
+    btn.Modal = false -- ГЛАВНОЕ: Не захватывает фокус мыши и не ломает управление камерой!
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
     
@@ -392,46 +389,28 @@ local function CreateScreenButton(name, size, pos, callback)
     return btn
 end
 
--- Кнопка E
+-- Кнопка E (Мгновенный тап без зависания управления)
 CreateScreenButton("E", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, 0), function()
-    local vim = game:GetService("VirtualInputManager")
-    if vim then
-        vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-        task.wait(0.05)
-        vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-    end
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+        task.wait(0.02)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+    end)
 end)
 
 -- Кнопка Q
 CreateScreenButton("Q", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0.45, -55), function()
-    local vim = game:GetService("VirtualInputManager")
-    if vim then
-        vim:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
-        task.wait(0.05)
-        vim:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
-    end
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+        task.wait(0.02)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+    end)
 end)
 
--- Кнопка Shift
+-- Кнопка Shift (Бег)
 CreateScreenButton("Shift", UDim2.new(0, 55, 0, 45), UDim2.new(1, -125, 0.45, 0), function()
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then
         hum.WalkSpeed = (hum.WalkSpeed == 16) and 24 or 16
-    end
-end)
-
--- Кнопка Gift
-CreateScreenButton("Gift", UDim2.new(0, 55, 0, 45), UDim2.new(1, -125, 0.45, -55), function()
-    for _, ui in ipairs(LocalPlayer.PlayerGui:GetDescendants()) do
-        if ui:IsA("TextButton") or ui:IsA("ImageButton") then
-            local n = ui.Name:lower()
-            if n:find("gift") or n:find("reward") or n:find("подар") or n:find("free") then
-                pcall(function()
-                    for _, conn in ipairs(getconnections(ui.MouseButton1Click)) do
-                        conn:Fire()
-                    end
-                end)
-            end
-        end
     end
 end)
