@@ -1,4 +1,4 @@
--- SBERBANK HUB [ULTIMATE MOBILE FIX v3]
+-- SBERBANK HUB [FIXED SPIN FLING]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -106,15 +106,15 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. НАСТОЯЩИЙ МОЩНЫЙ ФЛИНГ (КАК В INFINITE YIELD)
+-- 1. КРУТКА ВЛЕВО СТРОГО НА НОГАХ (БЕЗ ПЕРЕВОРОТОВ)
 local flingActive = false
-AddButton("Super Fling (Мощный откидыватель)", function(v) flingActive = v end)
+AddButton("Fling Влево (Ровный крутильщик)", function(v) flingActive = v end)
 RunService.Heartbeat:Connect(function()
     if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        local vel = hrp.AssemblyLinearVelocity
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 30000, 0) + (vel * 50)
-        hrp.CFrame = hrp.CFrame * CFrame.Angles(math.random(-50, 50), math.random(-50, 50), math.random(-50, 50))
+        -- Крутим только по оси Y (влево = отрицательное значение), скорость бешеная чтобы откидывать, но без наклонов
+        hrp.AssemblyAngularVelocity = Vector3.new(0, -15000, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 50, 0)
     end
 end)
 
@@ -202,10 +202,6 @@ AddButton("ESP Player (Никнеймы)", function(v) espPlayerNames = v end)
 local espRolesActive = false
 local roleObjects = {}
 AddButton("ESP Roles (Роли игроков)", function(v) espRolesActive = v end)
-
-local espNpcActive = false
-local npcObjects = {}
-AddButton("ESP NPC", function(v) espNpcActive = v end)
 
 RunService.RenderStepped:Connect(function()
     for _, o in pairs(boxObjects) do if o then o:Remove() end end boxObjects = {}
@@ -299,7 +295,7 @@ end)
 
 -- 9. ФРИЗ
 local freezeActive = false
-AddButton("Freeze (Заморозить игроков)", function(v) freezeChild = v end)
+AddButton("Freeze (Заморозить игроков)", function(v) freezeActive = v end)
 RunService.Heartbeat:Connect(function()
     if freezeActive then
         for _, p in ipairs(Players:GetPlayers()) do
@@ -327,7 +323,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- ИЗОЛИРОВАННЫЕ КНОПКИ (Не ломают джойстик)
+-- БЕЗОПАСНЫЕ КНОПКИ УПРАВЛЕНИЯ
 local function CreateIsolatedButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -339,7 +335,7 @@ local function CreateIsolatedButton(name, size, pos)
     btn.TextSize = 16
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = true
-    btn.Active = false -- ВАЖНО: чтобы не перехватывать фокус движения Роблокса!
+    btn.Active = false
     btn.Selectable = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
@@ -351,7 +347,7 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
--- КНОПКИ ЛКМ и ПКМ (Справа внизу, чуть выше, не ломают джойстик)
+-- КНОПКИ ЛКМ и ПКМ
 local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 65, 0, 45), UDim2.new(1, -160, 1, -110))
 local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 65, 0, 45), UDim2.new(1, -90, 1, -110))
 
@@ -372,4 +368,4 @@ pkmBtn.MouseButton1Click:Connect(function()
     ClickCenter(1)
 end)
 
-print("SBERBANK HUB [FIX v3] запущен!")
+print("SBERBANK HUB [SPIN FIX] запущен!")
