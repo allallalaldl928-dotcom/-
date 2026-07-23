@@ -1,9 +1,10 @@
--- SBERBANK HUB (Full Ultimate Version)
+-- SBERBANK HUB [ULTIMATE PRO EDITION]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -15,10 +16,10 @@ local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = "SberbankHubGui"
 ScreenGui.ResetOnSpawn = false
 
--- Кнопка открытия/закрытия
+-- Кнопка открытия/закрытия хаба
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
-ToggleButton.Size = UDim2.new(0, 50, 0, 50)
-ToggleButton.Position = UDim2.new(0, 20, 0, 150)
+ToggleButton.Size = UDim2.new(0, 45, 0, 45)
+ToggleButton.Position = UDim2.new(0, 20, 0, 200)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(15, 40, 25)
 ToggleButton.Image = "rbxassetid://18828254115"
 ToggleButton.ScaleType = Enum.ScaleType.Crop
@@ -28,410 +29,294 @@ Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(0, 200, 100), Thi
 
 -- Главное окно
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 230, 0, 440)
-MainFrame.Position = UDim2.new(0.5, -115, 0.5, -220)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 25, 15)
+MainFrame.Size = UDim2.new(0, 260, 0, 440)
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -220)
+MainFrame.BackgroundColor3 = Color3.fromRGB(8, 20, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Visible = false
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", MainFrame, {Color = Color3.fromRGB(0, 168, 89), Thickness = 1.5})
+MainFrame.ClipsDescendants = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", MainFrame, {Color = Color3.fromRGB(0, 180, 90), Thickness = 2})
+
+-- Фон: аватарка Сбера на всю ширину с рамками
+local BgImage = Instance.new("ImageLabel", MainFrame)
+BgImage.Size = UDim2.new(1, 40, 1, 0)
+BgImage.Position = UDim2.new(0, -20, 0, 0)
+BgImage.BackgroundTransparency = 1
+BgImage.Image = "rbxassetid://6023426915"
+BgImage.ScaleType = Enum.ScaleType.Crop
+BgImage.ImageTransparency = 0.75
 
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Заголовок
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -10, 0, 45)
-Title.Position = UDim2.new(0, 5, 0, 5)
-Title.BackgroundColor3 = Color3.fromRGB(20, 40, 30)
-Title.Text = "SBERBANK HUB [ULTIMATE]"
+Title.Size = UDim2.new(1, -16, 0, 40)
+Title.Position = UDim2.new(0, 8, 0, 8)
+Title.BackgroundColor3 = Color3.fromRGB(12, 35, 22)
+Title.BackgroundTransparency = 0.3
+Title.Text = "SBERBANK HUB [PRO]"
 Title.TextColor3 = Color3.fromRGB(0, 255, 128)
-Title.TextSize = 12
+Title.TextSize = 13
 Title.Font = Enum.Font.GothamBold
-Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", Title, {Color = Color3.fromRGB(0, 220, 110), Thickness = 1.5})
 
--- Скролл меню
 local Scroll = Instance.new("ScrollingFrame", MainFrame)
-Scroll.Size = UDim2.new(1, -10, 1, -60)
-Scroll.Position = UDim2.new(0, 5, 0, 55)
+Scroll.Size = UDim2.new(1, -12, 1, -60)
+Scroll.Position = UDim2.new(0, 6, 0, 54)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 2200)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 1800)
 Scroll.ScrollBarThickness = 3
 local UIList = Instance.new("UIListLayout", Scroll)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
 UIList.Padding = UDim.new(0, 6)
 
+-- Функция создания кнопки с крутящейся иконкой Сбера
 local function AddButton(name, callback)
     local btn = Instance.new("TextButton", Scroll)
-    btn.Size = UDim2.new(1, 0, 0, 34)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 50, 35)
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = Color3.fromRGB(15, 38, 24)
+    btn.BackgroundTransparency = 0.25
     btn.AutoButtonColor = false
     btn.Text = ""
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 180, 90), Thickness = 1})
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 180, 90), Thickness = 1.2})
     
     local txt = Instance.new("TextLabel", btn)
-    txt.Size = UDim2.new(1, -10, 1, 0)
-    txt.Position = UDim2.new(0, 8, 0, 0)
+    txt.Size = UDim2.new(1, -45, 1, 0)
+    txt.Position = UDim2.new(0, 10, 0, 0)
     txt.BackgroundTransparency = 1
     txt.Text = name
-    txt.TextColor3 = Color3.fromRGB(220, 255, 235)
+    txt.TextColor3 = Color3.fromRGB(230, 255, 240)
     txt.TextSize = 11
     txt.Font = Enum.Font.GothamBold
     txt.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local spinIcon = Instance.new("ImageLabel", btn)
+    spinIcon.Size = UDim2.new(0, 24, 0, 24)
+    spinIcon.Position = UDim2.new(1, -30, 0.5, -12)
+    spinIcon.BackgroundTransparency = 1
+    spinIcon.Image = "rbxassetid://6023426915"
+    spinIcon.ScaleType = Enum.ScaleType.Fit
+    
+    task.spawn(function()
+        while spinIcon and spinIcon.Parent do
+            TweenService:Create(spinIcon, TweenInfo.new(2, Enum.EasingStyle.Linear), {Rotation = spinIcon.Rotation + 360}):Play()
+            task.wait(2)
+        end
+    end)
     
     local active = false
     btn.MouseButton1Click:Connect(function()
         active = not active
-        btn.BackgroundColor3 = active and Color3.fromRGB(0, 130, 65) or Color3.fromRGB(20, 50, 35)
+        btn.BackgroundColor3 = active and Color3.fromRGB(0, 120, 60) or Color3.fromRGB(15, 38, 24)
         callback(active)
     end)
 end
 
-local function AddAction(name, callback)
-    local btn = Instance.new("TextButton", Scroll)
-    btn.Size = UDim2.new(1, 0, 0, 34)
-    btn.BackgroundColor3 = Color3.fromRGB(35, 30, 50)
-    btn.AutoButtonColor = false
-    btn.Text = ""
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    Instance.new("UIStroke", btn, {Color = Color3.fromRGB(150, 50, 150), Thickness = 1})
-    
-    local txt = Instance.new("TextLabel", btn)
-    txt.Size = UDim2.new(1, -10, 1, 0)
-    txt.Position = UDim2.new(0, 8, 0, 0)
-    txt.BackgroundTransparency = 1
-    txt.Text = name
-    txt.TextColor3 = Color3.fromRGB(255, 200, 220)
-    txt.TextSize = 11
-    txt.Font = Enum.Font.GothamBold
-    txt.TextXAlignment = Enum.TextXAlignment.Left
-    
-    btn.MouseButton1Click:Connect(callback)
-end
-
--- 1. ФЛАЙ (FLY)
+-- 1. ПОЛНОЦЕННЫЙ 3D ФЛАЙ
 local flyActive = false
 local flySpeed = 50
-AddButton("Fly Mode", function(v)
+local bv, bg
+
+AddButton("Fly Mode (Full 3D)", function(v)
     flyActive = v
     local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
     local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then hum.PlatformStand = flyActive end
+    
+    if flyActive then
+        if hum then hum.PlatformStand = true end
+        if hrp then
+            if bv then bv:Destroy() end
+            if bg then bg:Destroy() end
+            
+            bv = Instance.new("BodyVelocity", hrp)
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.Velocity = Vector3.new(0, 0, 0)
+            
+            bg = Instance.new("BodyGyro", hrp)
+            bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+            bg.CFrame = hrp.CFrame
+        end
+    else
+        if hum then hum.PlatformStand = false end
+        if bv then bv:Destroy() bv = nil end
+        if bg then bg:Destroy() bg = nil end
+    end
 end)
 
 RunService.RenderStepped:Connect(function()
-    if flyActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
+    if flyActive and LocalPlayer.Character then
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        local moveDir = hum and hum.MoveDirection or Vector3.zero
-        hrp.Velocity = (Camera.CFrame:VectorToWorldSpace(Camera.CFrame:VectorToObjectSpace(moveDir)) * flySpeed) + Vector3.new(0, 0.1, 0)
-    end
-end)
-
-local SpeedBox = Instance.new("TextBox", Scroll)
-SpeedBox.Size = UDim2.new(1, 0, 0, 32)
-SpeedBox.BackgroundColor3 = Color3.fromRGB(15, 35, 25)
-SpeedBox.Text = "Fly Speed: 50"
-SpeedBox.TextColor3 = Color3.fromRGB(220, 255, 235)
-SpeedBox.TextSize = 11
-SpeedBox.Font = Enum.Font.GothamBold
-Instance.new("UICorner", SpeedBox).CornerRadius = UDim.new(0, 6)
-SpeedBox.FocusLost:Connect(function()
-    local num = tonumber(SpeedBox.Text:match("%d+"))
-    if num then flySpeed = num end
-    SpeedBox.Text = "Fly Speed: " .. flySpeed
-end)
-
--- 2. СПИДХАК (WALKSPEED)
-local WalkSpeedBox = Instance.new("TextBox", Scroll)
-WalkSpeedBox.Size = UDim2.new(1, 0, 0, 32)
-WalkSpeedBox.BackgroundColor3 = Color3.fromRGB(15, 35, 25)
-WalkSpeedBox.Text = "WalkSpeed: 16"
-WalkSpeedBox.TextColor3 = Color3.fromRGB(220, 255, 235)
-WalkSpeedBox.TextSize = 11
-WalkSpeedBox.Font = Enum.Font.GothamBold
-Instance.new("UICorner", WalkSpeedBox).CornerRadius = UDim.new(0, 6)
-WalkSpeedBox.FocusLost:Connect(function()
-    local num = tonumber(WalkSpeedBox.Text:match("%d+"))
-    if num and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = num
-    end
-    WalkSpeedBox.Text = "WalkSpeed: " .. (num or 16)
-end)
-
--- 3. NOCLIP
-local noclipActive = false
-RunService.Stepped:Connect(function()
-    if noclipActive and LocalPlayer.Character then
-        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
-        end
-    end
-end)
-AddButton("Noclip", function(v) noclipActive = v end)
-
--- 4. МОБИЛЬНЫЙ ДЖОЙСТИК (POJAV / JOYSTICK)
-local pojJoystickActive = false
-local PojJoyFrame = Instance.new("Frame", ScreenGui)
-PojJoyFrame.Size = UDim2.new(0, 120, 0, 120)
-PojJoyFrame.Position = UDim2.new(0, 20, 1, -150)
-PojJoyFrame.BackgroundTransparency = 0.4
-PojJoyFrame.BackgroundColor3 = Color3.fromRGB(10, 25, 15)
-PojJoyFrame.Visible = false
-Instance.new("UICorner", PojJoyFrame).CornerRadius = UDim.new(1, 0)
-
-local PojKnob = Instance.new("Frame", PojJoyFrame)
-PojKnob.Size = UDim2.new(0, 50, 0, 50)
-PojKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
-PojKnob.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
-Instance.new("UICorner", PojKnob).CornerRadius = UDim.new(1, 0)
-
-local activeTouch, joyCenter = nil, Vector2.zero
-PojJoyFrame.InputBegan:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) and not activeTouch then
-        activeTouch = input
-        joyCenter = PojJoyFrame.AbsolutePosition + Vector2.new(60, 60)
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if input == activeTouch and pojJoystickActive then
-        local delta = Vector2.new(input.Position.X, input.Position.Y) - joyCenter
-        local dist = math.min(delta.Magnitude, 40)
-        local dir = delta.Magnitude > 0 and delta.Unit or Vector2.zero
-        PojKnob.Position = UDim2.new(0.5, (dir.X * dist) - 25, 0.5, (dir.Y * dist) - 25)
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChildOfClass("Humanoid") then
-            local camLook = Vector3.new(Camera.CFrame.LookVector.X, 0, Camera.CFrame.LookVector.Z).Unit
-            local camRight = Vector3.new(Camera.CFrame.RightVector.X, 0, Camera.CFrame.RightVector.Z).Unit
-            local moveDir = (camLook * (-dir.Y) + camRight * dir.X)
-            if moveDir.Magnitude > 0 then char.Humanoid:Move(moveDir.Unit, true) end
-        end
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input == activeTouch then
-        activeTouch = nil
-        PojKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChildOfClass("Humanoid") then char.Humanoid:Move(Vector3.zero, true) end
-    end
-end)
-AddButton("Mobile Joystick", function(v) pojJoystickActive = v; PojJoyFrame.Visible = v end)
-
--- 5. ESP ИГРОКОВ (HIGHLIGHT)
-AddButton("Player ESP", function(v)
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character then
-            if v and not plr.Character:FindFirstChild("SberHighlight") then
-                local hl = Instance.new("Highlight", plr.Character)
-                hl.Name = "SberHighlight"
-                hl.FillColor = Color3.fromRGB(0, 255, 128)
-            elseif not v and plr.Character:FindFirstChild("SberHighlight") then
-                plr.Character.SberHighlight:Destroy()
+        if hrp and hum and bv and bg then
+            bg.CFrame = Camera.CFrame
+            local moveDir = hum.MoveDirection
+            local velocity = Vector3.new(0, 0, 0)
+            
+            if moveDir.Magnitude > 0 then
+                velocity = Camera.CFrame:VectorToWorldSpace(Vector3.new(moveDir.X, 0, moveDir.Z)) * flySpeed
             end
+            
+            if hum.Jump then
+                velocity = velocity + Vector3.new(0, flySpeed, 0)
+            end
+            
+            bv.Velocity = velocity
         end
     end
 end)
 
--- 6. ESP БОКСЫ (BOX ESP)
-AddButton("ESP Box", function(v)
+-- 2. ESP BOX + ЛИНИИ
+local espActive = false
+local espObjects = {}
+
+AddButton("Box + Lines ESP", function(v)
+    espActive = v
+    if not v then
+        for _, obj in pairs(espObjects) do
+            if obj then obj:Remove() end
+        end
+        espObjects = {}
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not espActive then return end
+    
+    for _, obj in pairs(espObjects) do
+        if obj then obj:Remove() end
+    end
+    espObjects = {}
+
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") then
             local hrp = plr.Character.HumanoidRootPart
-            if v and not hrp:FindFirstChild("BoxESP") then
-                Instance.new("BoxHandleAdornment", hrp, {Name = "BoxESP", Size = Vector3.new(3, 5, 3), Adornee = hrp, AlwaysOnTop = true, Color3 = Color3.fromRGB(0, 255, 128), Transparency = 0.5})
-            elseif not v and hrp:FindFirstChild("BoxESP") then
-                hrp.BoxESP:Destroy()
+            local head = plr.Character.Head
+            
+            local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                local line = Drawing.new("Line")
+                line.Visible = true
+                line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                line.To = Vector2.new(vector.X, vector.Y)
+                line.Color = Color3.fromRGB(0, 255, 128)
+                line.Thickness = 1.5
+                table.insert(espObjects, line)
+
+                local topVector = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.8, 0))
+                local bottomVector = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 2.2, 0))
+                local boxHeight = math.abs(topVector.Y - bottomVector.Y)
+                local boxWidth = boxHeight / 2
+
+                local box = Drawing.new("Square")
+                box.Visible = true
+                box.Size = Vector2.new(boxWidth, boxHeight)
+                box.Position = Vector2.new(topVector.X - boxWidth / 2, topVector.Y)
+                box.Color = Color3.fromRGB(0, 255, 128)
+                box.Thickness = 1.5
+                box.Filled = false
+                table.insert(espObjects, box)
             end
         end
     end
 end)
 
--- 7. ESP NPC
-local npcHighlights = {}
-AddButton("NPC ESP", function(v)
-    if v then
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
-                if not Players:GetPlayerFromCharacter(obj) and obj ~= LocalPlayer.Character then
-                    if not obj:FindFirstChild("NPCEspHL") then
-                        local hl = Instance.new("Highlight", obj, {Name = "NPCEspHL", FillColor = Color3.fromRGB(0, 200, 255)})
-                        table.insert(npcHighlights, hl)
+-- 3. МОЩНЫЙ УЛУЧШЕННЫЙ ФЛИНГ (РАСКАТКА ИГРОКОВ)
+local flingActive = false
+AddButton("Fling Spin (Мощный Флинг)", function(v)
+    flingActive = v
+end)
+
+RunService.Heartbeat:Connect(function()
+    if flingActive and LocalPlayer.Character then
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            -- Находим ближайшего игрока для флинга
+            local target = nil
+            local minDist = math.huge
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (hrp.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                    if dist < minDist then
+                        minDist = dist
+                        target = plr.Character.HumanoidRootPart
                     end
                 end
             end
+            
+            if target then
+                hrp.CFrame = target.CFrame
+            end
+            
+            hrp.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
+            hrp.AssemblyLinearVelocity = Vector3.new(99999, 99999, 99999)
         end
-    else
-        for _, hl in ipairs(npcHighlights) do if hl then hl:Destroy() end end
-        npcHighlights = {}
     end
 end)
 
--- 8. MM2 ESP РОЛЕЙ
-local mm2EspActive = false
-local function getMM2Role(player)
-    pcall(function()
-        local backpack, char = player:FindFirstChildOfClass("Backpack"), player.Character
-        local function checkItem(item)
-            if not item then return end
-            local name = item.Name:lower()
-            if name:find("knife") or name:find("murder") then return "MURDERER"
-            elseif name:find("gun") or name:find("revolver") or name:find("sheriff") then return "SHERIFF" end
-        end
-        if char then for _, i in ipairs(char:GetChildren()) do local r = checkItem(i) if r then return r end end end
-        if backpack then for _, i in ipairs(backpack:GetChildren()) do local r = checkItem(i) if r then return r end end end
-    end)
-    return "Innocent"
+-- 4. ШИФТЛОК
+local shiftLockActive = false
+local ShiftLockButton = Instance.new("TextButton", ScreenGui)
+ShiftLockButton.Size = UDim2.new(0, 45, 0, 45)
+ShiftLockButton.Position = UDim2.new(1, -65, 0.4, 0)
+ShiftLockButton.BackgroundColor3 = Color3.fromRGB(15, 40, 25)
+ShiftLockButton.Text = "🔒"
+ShiftLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ShiftLockButton.TextSize = 20
+Instance.new("UICorner", ShiftLockButton).CornerRadius = UDim.new(1, 0)
+Instance.new("UIStroke", ShiftLockButton, {Color = Color3.fromRGB(0, 200, 100), Thickness = 2})
+
+ShiftLockButton.MouseButton1Click:Connect(function()
+    shiftLockActive = not shiftLockActive
+    ShiftLockButton.BackgroundColor3 = shiftLockActive and Color3.fromRGB(0, 130, 65) or Color3.fromRGB(15, 40, 25)
+end)
+
+RunService.RenderStepped:Connect(function()
+    if shiftLockActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(LocalPlayer.Character.HumanoidRootPart.Position, Vector3.new(Camera.CFrame.LookVector.X * 9999, LocalPlayer.Character.HumanoidRootPart.Position.Y, Camera.CFrame.LookVector.Z * 9999))
+    end
+end)
+
+-- 5. ПАНЕЛЬ POJAV LAUNCHER
+local PojavPanel = Instance.new("Frame", ScreenGui)
+PojavPanel.Size = UDim2.new(1, 0, 1, 0)
+PojavPanel.BackgroundTransparency = 1
+PojavPanel.Visible = true
+
+local function CreatePojavKey(name, size, pos)
+    local btn = Instance.new("TextButton", PojavPanel)
+    btn.Size = size
+    btn.Position = pos
+    btn.BackgroundColor3 = Color3.fromRGB(20, 35, 25)
+    btn.BackgroundTransparency = 0.4
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 14
+    btn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", btn, {Color = Color3.fromRGB(0, 180, 90), Thickness = 1.5})
+    return btn
 end
 
-AddButton("MM2 Role ESP", function(active)
-    mm2EspActive = active
-    if active then
-        RunService.RenderStepped:Connect(function()
-            if not mm2EspActive then return end
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-                    local head = player.Character.Head
-                    local role = getMM2Role(player)
-                    local tag = head:FindFirstChild("MM2RoleTag")
-                    if not tag then
-                        tag = Instance.new("BillboardGui", head, {Name = "MM2RoleTag", Size = UDim2.new(0, 100, 0, 40), StudsOffset = Vector3.new(0, 2.5, 0), AlwaysOnTop = true})
-                        Instance.new("TextLabel", tag, {Name = "RoleText", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, TextSize = 12, Font = Enum.Font.GothamBold})
-                    end
-                    local tLbl = tag:FindFirstChild("RoleText")
-                    if tLbl then
-                        tLbl.Text = player.Name .. "\n[" .. role .. "]"
-                        tLbl.TextColor3 = role == "MURDERER" and Color3.fromRGB(255, 50, 50) or (role == "SHERIFF" and Color3.fromRGB(50, 150, 255) or Color3.fromRGB(50, 255, 50))
-                    end
-                end
-            end
-        end)
-    else
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("Head") then
-                local tag = player.Character.Head:FindFirstChild("MM2RoleTag")
-                if tag then tag:Destroy() end
-            end
-        end
-    end
+local btnEsc = CreatePojavKey("Esc", UDim2.new(0, 50, 0, 35), UDim2.new(0, 10, 0, 10))
+local btnLKM = CreatePojavKey("ЛКМ", UDim2.new(0, 90, 0, 45), UDim2.new(0, 70, 0, 10))
+local btnPKM = CreatePojavKey("ПКМ", UDim2.new(0, 90, 0, 45), UDim2.new(0, 170, 0, 10))
+local btnQ   = CreatePojavKey("Q", UDim2.new(0, 45, 0, 45), UDim2.new(1, -60, 0, 10))
+local btnE   = CreatePojavKey("E", UDim2.new(0, 45, 0, 45), UDim2.new(0, 270, 0, 10))
+local btnShift = CreatePojavKey("Shift", UDim2.new(0, 60, 0, 35), UDim2.new(0, 330, 0, 10))
+
+btnE.MouseButton1Click:Connect(function()
+    local vim = game:GetService("VirtualInputManager")
+    vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
 end)
 
--- 9. ВЫБОР ЦЕЛИ (СПИСОК ИГРОКОВ)
-_G.SelectedTarget = nil
-local TargetLabel = Instance.new("TextLabel", Scroll)
-TargetLabel.Size = UDim2.new(1, 0, 0, 26)
-TargetLabel.BackgroundColor3 = Color3.fromRGB(10, 20, 15)
-TargetLabel.Text = " Target: None"
-TargetLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
-TargetLabel.TextSize = 11
-TargetLabel.Font = Enum.Font.GothamBold
-TargetLabel.TextXAlignment = Enum.TextXAlignment.Left
-Instance.new("UICorner", TargetLabel).CornerRadius = UDim.new(0, 4)
-
-local Dropdown = Instance.new("ScrollingFrame", Scroll)
-Dropdown.Size = UDim2.new(1, 0, 0, 80)
-Dropdown.BackgroundColor3 = Color3.fromRGB(12, 25, 18)
-Dropdown.BorderSizePixel = 0
-Dropdown.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Dropdown.ScrollBarThickness = 3
-Instance.new("UICorner", Dropdown).CornerRadius = UDim.new(0, 6)
-Instance.new("UIListLayout", Dropdown, {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2)})
-
-local function updateList()
-    for _, c in ipairs(Dropdown:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
-    for _, plr in ipairs(Players:GetPlayers()) do
-        local b = Instance.new("TextButton", Dropdown)
-        b.Size = UDim2.new(1, 0, 0, 24)
-        b.BackgroundColor3 = (plr == _G.SelectedTarget) and Color3.fromRGB(0, 135, 70) or Color3.fromRGB(20, 45, 30)
-        b.Text = " - " .. plr.Name
-        b.TextColor3 = Color3.fromRGB(220, 255, 235)
-        b.TextSize = 10
-        b.Font = Enum.Font.GothamSemibold
-        b.TextXAlignment = Enum.TextXAlignment.Left
-        b.MouseButton1Click:Connect(function()
-            _G.SelectedTarget = plr
-            TargetLabel.Text = " Target: " .. plr.Name
-            TargetLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
-            updateList()
-        end)
-    end
-end
-updateList()
-Players.PlayerAdded:Connect(updateList)
-Players.PlayerRemoving:Connect(updateList)
-
--- 10. ФЛИНГ ЦЕЛИ
-AddAction("Fling Selected Target", function()
-    local t = _G.SelectedTarget
-    if t and t.Character and t.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = t.Character.HumanoidRootPart
-        local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if myHrp then
-            local old = myHrp.CFrame
-            task.spawn(function()
-                for i = 1, 25 do
-                    if not hrp or not myHrp then break end
-                    myHrp.CFrame = hrp.CFrame
-                    hrp.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
-                    hrp.AssemblyLinearVelocity = Vector3.new(99999, 99999, 99999)
-                    task.wait()
-                end
-                myHrp.CFrame = old
-            end)
-        end
-    end
-end)
-
--- 11. ТП ЦЕЛИ ПОД КАРТУ
-AddAction("TP Target Under Map", function()
-    if _G.SelectedTarget and _G.SelectedTarget.Character and _G.SelectedTarget.Character:FindFirstChild("HumanoidRootPart") then
-        pcall(function()
-            _G.SelectedTarget.Character.HumanoidRootPart.CFrame -= Vector3.new(0, 500, 0)
-        end)
-    end
-end)
-
--- 12. ТП ЦЕЛИ К СЕБЕ
-AddAction("TP Target To Me", function()
-    if _G.SelectedTarget and _G.SelectedTarget.Character and _G.SelectedTarget.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        pcall(function()
-            _G.SelectedTarget.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(3, 0, 3)
-        end)
-    end
-end)
-
--- 13. ЗАМОРОЗКА ЦЕЛИ
-AddAction("Freeze Target", function()
-    if _G.SelectedTarget and _G.SelectedTarget.Character then
-        pcall(function()
-            local hum = _G.SelectedTarget.Character:FindFirstChildOfClass("Humanoid")
-            local root = _G.SelectedTarget.Character:FindFirstChild("HumanoidRootPart")
-            if hum and root then
-                hum.PlatformStand = true
-                root.Anchored = true
-            end
-        end)
-    end
-end)
-
--- 14. РАЗМОРОЗКА ЦЕЛИ
-AddAction("Unfreeze Target", function()
-    if _G.SelectedTarget and _G.SelectedTarget.Character then
-        pcall(function()
-            local hum = _G.SelectedTarget.Character:FindFirstChildOfClass("Humanoid")
-            local root = _G.SelectedTarget.Character:FindFirstChild("HumanoidRootPart")
-            if hum and root then
-                hum.PlatformStand = false
-                root.Anchored = false
-            end
-        end)
-    end
-end)
-
-print("Sberbank Hub [Ultimate] успешно запущен!")
-
+print("Sberbank Hub [Pro Edition] успешно запущен!")
