@@ -1,10 +1,9 @@
--- SBERBANK HUB [FINAL MOBILE FIXED PACK + PERFECT FLING]
+-- SBERBANK HUB [FINAL MOBILE UI FIX]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -15,6 +14,7 @@ end
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = "SberbankHubGui"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
 
 -- Кнопка открытия/закрытия хаба
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
@@ -57,7 +57,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIXED]"
+Title.Text = "SBERBANK HUB [MOBILE]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -108,31 +108,14 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ (ИДЕАЛЬНЫЙ: без наклонов и провалов под карту)
+-- 1. ФЛИНГ
 local flingActive = false
-local bgFling, bavFling
-AddButton("Fling (Безопасная крутилка)", function(v)
-    flingActive = v
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    if flingActive then
-        -- Запрещаем наклоняться по осям X и Z (Фикс "под углом")
-        bgFling = Instance.new("BodyGyro", hrp)
-        bgFling.P = 9e4
-        bgFling.MaxTorque = Vector3.new(math.huge, 0, math.huge)
-        bgFling.CFrame = hrp.CFrame
-
-        -- Включаем стабильное вращение только по оси Y (Фикс "тепает под карту")
-        bavFling = Instance.new("BodyAngularVelocity", hrp)
-        bavFling.AngularVelocity = Vector3.new(0, 40000, 0) -- Скорость подобрана для мощного откидывания без багов
-        bavFling.MaxTorque = Vector3.new(0, math.huge, 0)
-    else
-        if bgFling then bgFling:Destroy() end
-        if bavFling then bavFling:Destroy() end
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+AddButton("Fling (Безопасная крутилка)", function(v) flingActive = v end)
+RunService.Heartbeat:Connect(function()
+    if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 25000, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 2, hrp.AssemblyLinearVelocity.Z)
     end
 end)
 
@@ -406,7 +389,79 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 13. ИГРОВЫЕ КНОПКИ УПРАВЛЕНИЯ
+-- 13. КАСТОМНЫЙ ДЖОЙСТИК ДВИЖЕНИЯ (Сдвинут правее на левой половине экрана)
+local VirtualUser = game:GetService("VirtualUser")
+local thumbstickArea = Instance.new("Frame", ScreenGui)
+thumbstickArea.Name = "CustomThumbstickArea"
+thumbstickArea.Size = UDim2.new(0, 180, 0, 180)
+thumbstickArea.Position = UDim2.new(0, 45, 1, -210) -- Сдвинут правее, под пальцы
+thumbstickArea.BackgroundTransparency = 1
+
+local stickBase = Instance.new("Frame", thumbstickArea)
+stickBase.Size = UDim2.new(0, 100, 0, 100)
+stickBase.Position = UDim2.new(0.5, -50, 0.5, -50)
+stickBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+stickBase.BackgroundTransparency = 0.6
+Instance.new("UICorner", stickBase).CornerRadius = UDim.new(1, 0)
+
+local stickKnob = Instance.new("Frame", stickBase)
+stickKnob.Size = UDim2.new(0, 45, 0, 45)
+stickKnob.Position = UDim2.new(0.5, -22, 0.5, -22)
+stickKnob.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
+stickKnob.BackgroundTransparency = 0.3
+Instance.new("UICorner", stickKnob).CornerRadius = UDim.new(1, 0)
+
+-- Логика виртуального джойстика
+local draggingStick = false
+local stickCenter = Vector2.new(0, 0)
+local currentMoveVector = Vector3.new(0, 0, 0)
+
+thumbstickArea.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingStick = true
+        stickCenter = stickBase.AbsolutePosition + (stickBase.AbsoluteSize / 2)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingStick = false
+        stickKnob.Position = UDim2.new(0.5, -22, 0.5, -22)
+        currentMoveVector = Vector3.new(0, 0, 0)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingStick and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local mousePos = Vector2.new(input.Position.X, input.Position.Y)
+        local delta = mousePos - stickCenter
+        local maxDist = 40
+        if delta.Magnitude > maxDist then
+            delta = delta.Unit * maxDist
+        end
+        stickKnob.Position = UDim2.new(0.5, delta.X - 22, 0.5, delta.Y - 22)
+        
+        local moveX = delta.X / maxDist
+        local moveY = delta.Y / maxDist
+        currentMoveVector = Vector3.new(moveX, 0, moveY)
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if currentMoveVector.Magnitude > 0 then
+            local camFwd = Camera.CFrame.LookVector
+            local camRight = Camera.CFrame.RightVector
+            camFwd = Vector3.new(camFwd.X, 0, camFwd.Y ~= 0 and camFwd.Z or camFwd.Z).Unit
+            camRight = Vector3.new(camRight.X, 0, camRight.Z).Unit
+            local moveDir = (camFwd * -currentMoveVector.Z) + (camRight * currentMoveVector.X)
+            hum:Move(moveDir, true)
+        end
+    end
+end)
+
+-- 14. ИГРОВЫЕ КНОПКИ УПРАВЛЕНИЯ
 local vim = game:GetService("VirtualInputManager")
 
 local function CreateKey(name, size, pos, keyCode, isMouse)
@@ -437,25 +492,4 @@ local function CreateKey(name, size, pos, keyCode, isMouse)
     end)
 
     btn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-            if isMouse == "Left" then
-                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 0, false, game, 1)
-            elseif isMouse == "Right" then
-                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 1, false, game, 1)
-            elseif keyCode then
-                vim:SendKeyEvent(false, keyCode, false, game)
-            end
-        end
-    end)
-end
-
--- Кнопки строго по позициям с твоего скриншота:
-CreateKey("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50), Enum.KeyCode.Escape, nil)
-CreateKey("ЛКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.25, -50, 0, 45), nil, "Left")
-CreateKey("ПКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.65, -50, 0, 45), nil, "Right")
-CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q, nil)
-CreateKey("E", UDim2.new(0, 60, 0, 60), UDim2.new(0.25, -30, 0.55, 0), Enum.KeyCode.E, nil)
-CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift, nil)
-
-print("Sberbank Hub [Perfect Fling Edition] успешно запущен!")
+        if input.UserInputType
