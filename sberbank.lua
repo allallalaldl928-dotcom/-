@@ -1,4 +1,4 @@
--- SBERBANK HUB [SPIN & FIXED JOYSTICK]
+-- SBERBANK HUB [MOBILE FIXED & SUPER SPIN]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -55,7 +55,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIX]"
+Title.Text = "SBERBANK HUB [MOBILE FIX]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -106,17 +106,18 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. СПИН (Вращение по оси Rotate)
+-- 1. СУПЕР-СПИН (Откидывание)
 local spinActive = false
-AddButton("Spin (Вращение на месте)", function(v) spinActive = v end)
+AddButton("Super Spin (Быстрое откидывание)", function(v) spinActive = v end)
 RunService.Heartbeat:Connect(function()
     if spinActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 50, 0)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 30000, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
     end
 end)
 
--- 2. ФЛАЙ
+-- 2. РАБОЧИЙ ФЛАЙ
 local flyActive = false
 local flySpeed = 50
 local bv, bg
@@ -285,84 +286,10 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- ДЖОЙСТИК (Сдвинут правее: X = 120)
-local thumbstickArea = Instance.new("Frame", ScreenGui)
-thumbstickArea.Name = "CustomThumbstickArea"
-thumbstickArea.Size = UDim2.new(0, 200, 0, 200)
-thumbstickArea.Position = UDim2.new(0, 120, 1, -220)
-thumbstickArea.BackgroundTransparency = 1
-thumbstickArea.Active = true
+-- ЭКРАННЫЕ КНОПКИ (Безопасные для мобилок)
+local vim = pcall(function() return game:GetService("VirtualInputManager") end) and game:GetService("VirtualInputManager") or nil
 
-local stickBase = Instance.new("Frame", thumbstickArea)
-stickBase.Size = UDim2.new(0, 100, 0, 100)
-stickBase.Position = UDim2.new(0, 10, 0.5, -50)
-stickBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-stickBase.BackgroundTransparency = 0.6
-Instance.new("UICorner", stickBase).CornerRadius = UDim.new(1, 0)
-
-local stickKnob = Instance.new("Frame", stickBase)
-stickKnob.Size = UDim2.new(0, 45, 0, 45)
-stickKnob.Position = UDim2.new(0.5, -22, 0.5, -22)
-stickKnob.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
-stickKnob.BackgroundTransparency = 0.3
-Instance.new("UICorner", stickKnob).CornerRadius = UDim.new(1, 0)
-
-local draggingStick = false
-local stickCenter = Vector2.new(0, 0)
-local currentMoveVector = Vector3.new(0, 0, 0)
-
-thumbstickArea.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingStick = true
-        stickCenter = stickBase.AbsolutePosition + (stickBase.AbsoluteSize / 2)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingStick = false
-        stickKnob.Position = UDim2.new(0.5, -22, 0.5, -22)
-        currentMoveVector = Vector3.new(0, 0, 0)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if draggingStick and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local mousePos = Vector2.new(input.Position.X, input.Position.Y)
-        local delta = mousePos - stickCenter
-        local maxDist = 40
-        if delta.Magnitude > maxDist then
-            delta = delta.Unit * maxDist
-        end
-        stickKnob.Position = UDim2.new(0.5, delta.X - 22, 0.5, delta.Y - 22)
-        local moveX = delta.X / maxDist
-        local moveY = delta.Y / maxDist
-        currentMoveVector = Vector3.new(moveX, 0, moveY)
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if currentMoveVector.Magnitude > 0 then
-            local camFwd = Camera.CFrame.LookVector
-            local camRight = Camera.CFrame.RightVector
-            camFwd = Vector3.new(camFwd.X, 0, camFwd.Z).Unit
-            camRight = Vector3.new(camRight.X, 0, camRight.Z).Unit
-            local moveDir = (camFwd * -currentMoveVector.Z) + (camRight * currentMoveVector.X)
-            
-            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp and not flyActive then
-                hrp.CFrame = hrp.CFrame + (moveDir * (hum.WalkSpeed * RunService.RenderStepped:Wait()))
-            end
-        end
-    end
-end)
-
--- ЭКРАННЫЕ КНОПКИ
-local vim = game:GetService("VirtualInputManager")
-
-local function CreateKey(name, size, pos, keyCode, isMouse)
+local function CreateKey(name, size, pos, keyCode)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
     btn.Position = pos
@@ -377,37 +304,27 @@ local function CreateKey(name, size, pos, keyCode, isMouse)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
 
     btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and vim then
             btn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
-            if isMouse == "Left" then
-                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 0, true, game, 1)
-            elseif isMouse == "Right" then
-                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 1, true, game, 1)
-            elseif keyCode then
+            pcall(function()
                 vim:SendKeyEvent(true, keyCode, false, game)
-            end
+            end)
         end
     end)
 
     btn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and vim then
             btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-            if isMouse == "Left" then
-                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 0, false, game, 1)
-            elseif isMouse == "Right" then
-                vim:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 1, false, game, 1)
-            elseif keyCode then
+            pcall(function()
                 vim:SendKeyEvent(false, keyCode, false, game)
-            end
+            end)
         end
     end)
 end
 
-CreateKey("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50), Enum.KeyCode.Escape, nil)
-CreateKey("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105), Enum.KeyCode.E, nil)
-CreateKey("ЛКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.25, -50, 0, 45), nil, "Left")
-CreateKey("ПКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.65, -50, 0, 45), nil, "Right")
-CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q, nil)
-CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift, nil)
+CreateKey("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50), Enum.KeyCode.Escape)
+CreateKey("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105), Enum.KeyCode.E)
+CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q)
+CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift)
 
 print("Sberbank Hub успешно запущен!")
