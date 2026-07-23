@@ -1,4 +1,4 @@
--- SBERBANK HUB [ULTIMATE MOBILE FIX + LKM/PKM + ROLE ESP]
+-- SBERBANK HUB [ULTIMATE MOBILE FIX v3]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -106,14 +106,15 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. СУПЕР-СПИН
-local spinActive = false
-AddButton("Super Spin (Быстрое откидывание)", function(v) spinActive = v end)
+-- 1. НАСТОЯЩИЙ МОЩНЫЙ ФЛИНГ (КАК В INFINITE YIELD)
+local flingActive = false
+AddButton("Super Fling (Мощный откидыватель)", function(v) flingActive = v end)
 RunService.Heartbeat:Connect(function()
-    if spinActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 50000, 0)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        local vel = hrp.AssemblyLinearVelocity
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 30000, 0) + (vel * 50)
+        hrp.CFrame = hrp.CFrame * CFrame.Angles(math.random(-50, 50), math.random(-50, 50), math.random(-50, 50))
     end
 end)
 
@@ -219,8 +220,7 @@ RunService.RenderStepped:Connect(function()
                 local head = plr.Character.Head
                 local vec, onScreen = Camera:WorldToViewportPoint(hrp.Position)
                 
-                -- Определение роли (по оружию в руках или рюкзаке)
-                local roleColor = Color3.fromRGB(0, 255, 128) -- По умолчанию мирный
+                local roleColor = Color3.fromRGB(0, 255, 128)
                 local roleText = "Игрок"
                 
                 local char = plr.Character
@@ -230,10 +230,10 @@ RunService.RenderStepped:Connect(function()
                     if not t then return end
                     local name = t.Name:lower()
                     if name:find("gun") or name:find("pistol") or name:find("revolver") or name:find("шериф") then
-                        roleColor = Color3.fromRGB(0, 150, 255) -- Шериф (Синий)
+                        roleColor = Color3.fromRGB(0, 150, 255)
                         roleText = "Шериф"
                     elseif name:find("knife") or name:find("sword") or name:find("dagger") or name:find("убийца") or name:find("murder") then
-                        roleColor = Color3.fromRGB(255, 50, 50) -- Убийца (Красный)
+                        roleColor = Color3.fromRGB(255, 50, 50)
                         roleText = "Убийца"
                     end
                 end
@@ -299,7 +299,7 @@ end)
 
 -- 9. ФРИЗ
 local freezeActive = false
-AddButton("Freeze (Заморозить игроков)", function(v) freezeActive = v end)
+AddButton("Freeze (Заморозить игроков)", function(v) freezeChild = v end)
 RunService.Heartbeat:Connect(function()
     if freezeActive then
         for _, p in ipairs(Players:GetPlayers()) do
@@ -327,7 +327,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- ИЗОЛИРОВАННЫЕ КНОПКИ (Не ломают джойстик Роблокса)
+-- ИЗОЛИРОВАННЫЕ КНОПКИ (Не ломают джойстик)
 local function CreateIsolatedButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
@@ -339,6 +339,7 @@ local function CreateIsolatedButton(name, size, pos)
     btn.TextSize = 16
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = true
+    btn.Active = false -- ВАЖНО: чтобы не перехватывать фокус движения Роблокса!
     btn.Selectable = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
@@ -350,9 +351,9 @@ CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
 CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
 CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
--- КНОПКИ ЛКМ и ПКМ (нажатие по центру экрана)
-local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 75, 0, 50), UDim2.new(1, -90, 0.7, 0))
-local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 75, 0, 50), UDim2.new(1, -90, 0.7, 60))
+-- КНОПКИ ЛКМ и ПКМ (Справа внизу, чуть выше, не ломают джойстик)
+local lkmBtn = CreateIsolatedButton("ЛКМ", UDim2.new(0, 65, 0, 45), UDim2.new(1, -160, 1, -110))
+local pkmBtn = CreateIsolatedButton("ПКМ", UDim2.new(0, 65, 0, 45), UDim2.new(1, -90, 1, -110))
 
 local function ClickCenter(buttonEnum)
     local viewport = Camera.ViewportSize
@@ -364,11 +365,11 @@ local function ClickCenter(buttonEnum)
 end
 
 lkmBtn.MouseButton1Click:Connect(function()
-    ClickCenter(0) -- 0 это ЛКМ
+    ClickCenter(0)
 end)
 
 pkmBtn.MouseButton1Click:Connect(function()
-    ClickCenter(1) -- 1 это ПКМ
+    ClickCenter(1)
 end)
 
-print("SBERBANK HUB успешно обновлен (ЛКМ/ПКМ по центру + ESP ролей)!")
+print("SBERBANK HUB [FIX v3] запущен!")
