@@ -1,4 +1,4 @@
--- SBERBANK HUB [FINAL MOBILE FIXED]
+-- SBERBANK HUB [ULTIMATE MOBILE FIX]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -54,7 +54,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIXED]"
+Title.Text = "SBERBANK HUB [FIX]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -285,27 +285,26 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- Безопасные экранные кнопки (не воруют мобильный джойстик)
-local function CreateSafeButton(name, size, pos)
+-- ИЗОЛИРОВАННЫЕ КНОПКИ (Не ломают джойстик Роблокса)
+local function CreateIsolatedButton(name, size, pos)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
     btn.Position = pos
     btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.BackgroundTransparency = 0.5
+    btn.BackgroundTransparency = 0.4
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.TextSize = 16
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = true
-    btn.Active = false
-    btn.Modal = false
+    btn.Selectable = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
 end
 
-CreateSafeButton("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50))
-CreateSafeButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
-CreateSafeButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
-CreateSafeButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
+CreateIsolatedButton("Esc", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 50))
+CreateIsolatedButton("E", UDim2.new(0, 60, 0, 45), UDim2.new(0, 10, 0, 105))
+CreateIsolatedButton("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55))
+CreateIsolatedButton("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0))
 
-print("Sberbank Hub успешно запущен!")
+print("Sberbank Hub запущен без потери джойстика!")
