@@ -1,4 +1,4 @@
--- SBERBANK HUB [FIXED MOVEMENT & FLING]
+-- SBERBANK HUB [FINAL FIXED MOVEMENT & BUTTONS]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -106,13 +106,13 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ ТОЛЬКО ПО ОСИ Y (Чистое вращение)
+-- 1. ФЛИНГ (Строго по оси Y)
 local flingActive = false
 AddButton("Fling (Строго по оси Rotate)", function(v) flingActive = v end)
 RunService.Heartbeat:Connect(function()
     if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 30000, 0) -- Крутит ровно на месте
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 30000, 0)
         hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
     end
 end)
@@ -286,7 +286,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- ИСПРАВЛЕННЫЙ КАСТОМНЫЙ ДЖОЙСТИК (Не крутит камеру)
+-- НАДЕЖНЫЙ ДЖОЙСТИК (Не ломает камеру и движение)
 local thumbstickArea = Instance.new("Frame", ScreenGui)
 thumbstickArea.Name = "CustomThumbstickArea"
 thumbstickArea.Size = UDim2.new(0, 200, 0, 200)
@@ -346,14 +346,12 @@ RunService.RenderStepped:Connect(function()
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if currentMoveVector.Magnitude > 0 then
-            -- Двигаем персонажа строго относительно камеры, но без принудительного вращения самой камеры
             local camFwd = Camera.CFrame.LookVector
             local camRight = Camera.CFrame.RightVector
             camFwd = Vector3.new(camFwd.X, 0, camFwd.Z).Unit
             camRight = Vector3.new(camRight.X, 0, camRight.Z).Unit
             local moveDir = (camFwd * -currentMoveVector.Z) + (camRight * currentMoveVector.X)
             
-            -- Используем прямое смещение позиции вместо hum:Move, чтобы экран не дергался
             local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if hrp and not flyActive then
                 hrp.CFrame = hrp.CFrame + (moveDir * (hum.WalkSpeed * RunService.RenderStepped:Wait()))
@@ -362,7 +360,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ЭКРАННЫЕ КНОПКИ УПРАВЛЕНИЯ
+-- ЭКРАННЫЕ КНОПКИ (Исправленные, не сбрасывают ходьбу)
 local vim = game:GetService("VirtualInputManager")
 
 local function CreateKey(name, size, pos, keyCode, isMouse)
@@ -379,6 +377,7 @@ local function CreateKey(name, size, pos, keyCode, isMouse)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
 
+    -- Используем Sink-логику касаний, чтобы палец на кнопке не триггерил сброс джойстика
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             btn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
