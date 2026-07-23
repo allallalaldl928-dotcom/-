@@ -76,7 +76,7 @@ Title.Size = UDim2.new(1, -50, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [ULTIMATE]"
+Title.Text = "SBERBANK HUB [FIXED]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 10
 Title.Font = Enum.Font.GothamBold
@@ -146,9 +146,10 @@ end
 local espFolder = Instance.new("Folder", ScreenGui)
 espFolder.Name = "ESP_Visuals"
 
+-- ИСПРАВЛЕННЫЙ ФЛАЙ (Без инверсий и улетов)
 local flyActive = false
-local flySpeed = 55
-AddButton("Fly (Поворот за камерой)", function(v)
+local flySpeed = 50
+AddButton("Fly (Исправленный)", function(v)
     flyActive = v
     local char = LocalPlayer.Character
     if not char then return end
@@ -159,10 +160,16 @@ AddButton("Fly (Поворот за камерой)", function(v)
     if flyActive then
         hum.PlatformStand = true
         local bv = Instance.new("BodyVelocity")
-        bv.Name = "SberFlyVel"
-        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bv.Name = "FixedFlyVel"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.Parent = hrp
+
+        local bg = Instance.new("BodyGyro")
+        bg.Name = "FixedFlyGyro"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.CFrame = hrp.CFrame
+        bg.Parent = hrp
 
         task.spawn(function()
             while flyActive and ScreenGui.Parent do
@@ -170,37 +177,45 @@ AddButton("Fly (Поворот за камерой)", function(v)
                 local cChar = LocalPlayer.Character
                 local cHrp = cChar and cChar:FindFirstChild("HumanoidRootPart")
                 local cHum = cChar and cChar:FindFirstChildOfClass("Humanoid")
-                local cBv = cHrp and cHrp:FindFirstChild("SberFlyVel")
-                if not cHrp or not cHum or not cBv then break end
+                local cBv = cHrp and cHrp:FindFirstChild("FixedFlyVel")
+                local cBg = cHrp and cHrp:FindFirstChild("FixedFlyGyro")
+                if not cHrp or not cHum or not cBv or not cBg then break end
 
-                local camCFrame = Camera.CFrame
+                local cam = Camera.CFrame
                 local moveDir = cHum.MoveDirection
                 
                 if moveDir.Magnitude > 0 then
-                    cBv.Velocity = (camCFrame.RightVector * moveDir.X + camCFrame.LookVector * moveDir.Z) * flySpeed
+                    -- Четкое следование направлению камеры без инверсий
+                    cBv.Velocity = Vector3.new(cam.LookVector.X, 0, cam.LookVector.Z).Unit * moveDir.Z * flySpeed 
+                        + Vector3.new(cam.RightVector.X, 0, cam.RightVector.Z).Unit * moveDir.X * flySpeed
+                        + Vector3.new(0, moveDir.Y * flySpeed, 0)
                 else
-                    cBv.Velocity = Vector3.new(0, 0, 0)
+                    cBv.Velocity = Vector3.new(0, 0.1, 0) -- зависание на месте
                 end
-                cHrp.CFrame = CFrame.new(cHrp.Position, cHrp.Position + camCFrame.LookVector)
+                cBg.CFrame = cam
             end
-            if hrp and hrp:FindFirstChild("SberFlyVel") then
-                hrp.SberFlyVel:Destroy()
+            if hrp then
+                if hrp:FindFirstChild("FixedFlyVel") then hrp.FixedFlyVel:Destroy() end
+                if hrp:FindFirstChild("FixedFlyGyro") then hrp.FixedFlyGyro:Destroy() end
             end
         end)
     else
         hum.PlatformStand = false
-        if hrp and hrp:FindFirstChild("SberFlyVel") then
-            hrp.SberFlyVel:Destroy()
+        if hrp then
+            if hrp:FindFirstChild("FixedFlyVel") then hrp.FixedFlyVel:Destroy() end
+            if hrp:FindFirstChild("FixedFlyGyro") then hrp.FixedFlyGyro:Destroy() end
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
         end
-        if hrp then hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end
     end
 end)
 
+-- ИСПРАВЛЕННЫЙ ФЛИНГ (Без улетания за карту)
 local flingActive = false
-AddButton("Fling (Стоя)", function(v) 
+AddButton("Fling (Безопасный)", function(v) 
     flingActive = v 
     if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         LocalPlayer.Character.HumanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        LocalPlayer.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
     end
 end)
 
@@ -209,8 +224,9 @@ RunService.Heartbeat:Connect(function()
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
-            hrp.AssemblyAngularVelocity = Vector3.new(0, 4000, 0)
-            hrp.AssemblyLinearVelocity = Vector3.new(0, 2, 0)
+            -- Контролируемое вращение вместо бесконечного разгона
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 30000, 0)
+            hrp.AssemblyLinearVelocity = Vector3.new(math.random(-20,20), 5, math.random(-20,20))
         end
     end
 end)
