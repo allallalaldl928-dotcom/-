@@ -50,8 +50,7 @@ BgGradient.Color = ColorSequence.new({
 })
 BgGradient.Rotation = 45
 
--- Надежное открытие/закрытие для мобильных (обход багов Draggable)
-local duplicatingCheck = false
+-- Надежное открытие/закрытие для мобильных
 ToggleButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         local startPos = input.Position
@@ -67,7 +66,6 @@ ToggleButton.InputBegan:Connect(function(input)
             end
         end)
         
-        -- Проверка, тянул ли пользователь иконку или просто нажал
         task.spawn(function()
             while input.UserInputState == Enum.UserInputState.Begin do
                 if (input.Position - startPos).Magnitude > 10 then
@@ -81,16 +79,33 @@ ToggleButton.InputBegan:Connect(function(input)
 end)
 
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -16, 0, 32)
+Title.Size = UDim2.new(1, -50, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIXED]"
+Title.Text = "SBERBANK HUB [ULTIMATE]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 11
+Title.TextSize = 10
 Title.Font = Enum.Font.GothamBold
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", Title, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
+
+-- КНОПКА ПОЛНОГО ЗАКРЫТИЯ СКРИПТА (Х)
+local CloseButton = Instance.new("TextButton", MainFrame)
+CloseButton.Size = UDim2.new(0, 32, 0, 32)
+CloseButton.Position = UDim2.new(1, -40, 0, 8)
+CloseButton.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+CloseButton.BackgroundTransparency = 0.2
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 14
+CloseButton.Font = Enum.Font.GothamBold
+Instance.new("UICorner", CloseButton).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", CloseButton, {Color = Color3.fromRGB(255, 80, 80), Thickness = 1.5})
+
+CloseButton.Activated:Connect(function()
+    ScreenGui:Destroy()
+end)
 
 local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Size = UDim2.new(1, -12, 1, -55)
@@ -138,11 +153,11 @@ end
 
 -- 3. ФУНКЦИИ
 
--- Флай (Fly)
+-- Флай с поддержкой джойстика по высоте
 local newFlying = false
 local flyKeys = {W = false, S = false, A = false, D = false, Space = false, Shift = false}
 
-AddButton("Fly (Управляемый)", function(v)
+AddButton("Fly (Джойстик Вверх/Вниз)", function(v)
     newFlying = v
     local char = LocalPlayer.Character
     if not char then return end
@@ -153,7 +168,7 @@ AddButton("Fly (Управляемый)", function(v)
     if newFlying then
         hum.PlatformStand = true
         task.spawn(function()
-            while newFlying do
+            while newFlying and ScreenGui.Parent do
                 RunService.RenderStepped:Wait()
                 local currentChar = LocalPlayer.Character
                 if not currentChar then break end
@@ -166,20 +181,23 @@ AddButton("Fly (Управляемый)", function(v)
                 local right = Camera.CFrame.RightVector
                 
                 if currentHum.MoveDirection.Magnitude > 0 then
-                    moveVec = moveVec + currentHum.MoveDirection
+                    local camLookFlat = Vector3.new(look.X, 0, look.Z).Unit
+                    local camRightFlat = Vector3.new(right.X, 0, right.Z).Unit
+                    local rel = currentHum.MoveDirection
+                    moveVec = moveVec + (camLookFlat * -rel.Z) + (camRightFlat * rel.X)
                 end
                 
-                if flyKeys.W then moveVec = moveVec + look end
-                if flyKeys.S then moveVec = moveVec - look end
-                if flyKeys.A then moveVec = moveVec - right end
-                if flyKeys.D then moveVec = moveVec + right end
-                if flyKeys.Space then moveVec = moveVec + Vector3.new(0, 1, 0) end
-                if flyKeys.Shift then moveVec = moveVec - Vector3.new(0, 1, 0) end
+                if flyKeys.Space or currentHum.MoveDirection.Y > 0.1 then 
+                    moveVec = moveVec + Vector3.new(0, 1, 0) 
+                end
+                if flyKeys.Shift then 
+                    moveVec = moveVec - Vector3.new(0, 1, 0) 
+                end
                 
                 if moveVec.Magnitude > 0 then
                     currentHrp.AssemblyLinearVelocity = moveVec.Unit * 60
                 else
-                    currentHrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    currentHrp.AssemblyLinearVelocity = Vector3.new(0, 0.1, 0)
                 end
                 currentHrp.CFrame = CFrame.new(currentHrp.Position, currentHrp.Position + look)
             end
@@ -211,17 +229,17 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Флинг (Fling)
+-- Флинг (Спин со скоростью 700)
 local newFlingActive = false
-AddButton("Fling (Раскидывание)", function(v) newFlingActive = v end)
+AddButton("Fling (Спин 700)", function(v) newFlingActive = v end)
 
 RunService.Heartbeat:Connect(function()
-    if newFlingActive then
+    if newFlingActive and ScreenGui.Parent then
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if hrp then
-            hrp.AssemblyAngularVelocity = Vector3.new(10000, 10000, 10000)
-            hrp.AssemblyLinearVelocity = Vector3.new(math.random(-100, 100), 50, math.random(-100, 100))
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 700, 0)
+            hrp.AssemblyLinearVelocity = Vector3.new(math.random(-150, 150), 100, math.random(-150, 150))
         end
     end
 end)
@@ -230,7 +248,7 @@ end)
 local noclipActive = false
 AddButton("Noclip (Сквозь стены)", function(v) noclipActive = v end)
 RunService.Stepped:Connect(function()
-    if noclipActive and LocalPlayer.Character then
+    if noclipActive and ScreenGui.Parent and LocalPlayer.Character then
         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then part.CanCollide = false end
         end
@@ -241,7 +259,7 @@ end)
 local speedActive = false
 AddButton("Speed Hack (Скорость)", function(v) speedActive = v end)
 RunService.Heartbeat:Connect(function()
-    if speedActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+    if speedActive and ScreenGui.Parent and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 35
     end
 end)
@@ -250,7 +268,7 @@ end)
 local highJumpActive = false
 AddButton("High Jump (Прыжок)", function(v) highJumpActive = v end)
 RunService.Heartbeat:Connect(function()
-    if highJumpActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+    if highJumpActive and ScreenGui.Parent and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = 120
     end
 end)
@@ -282,6 +300,8 @@ RunService.RenderStepped:Connect(function()
     for _, o in pairs(nameObjects) do if o then o:Remove() end end nameObjects = {}
     for _, o in pairs(roleObjects) do if o then o:Remove() end end roleObjects = {}
     for _, o in pairs(npcObjects) do if o then o:Remove() end end npcObjects = {}
+
+    if not ScreenGui.Parent then return end
 
     if espBoxActive or espLinesActive or espPlayerNames or espRolesActive then
         for _, plr in ipairs(Players:GetPlayers()) do
@@ -402,7 +422,7 @@ AddButton("Freeze (Заморозка)", function(v)
 end)
 
 RunService.Heartbeat:Connect(function()
-    if freezeActive then
+    if freezeActive and ScreenGui.Parent then
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                 p.Character.HumanoidRootPart.Anchored = true
