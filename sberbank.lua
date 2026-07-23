@@ -2,7 +2,6 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
@@ -80,7 +79,7 @@ Title.Size = UDim2.new(1, -50, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [IY STYLE]"
+Title.Text = "SBERBANK HUB [FINAL FIX]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 10
 Title.Font = Enum.Font.GothamBold
@@ -149,10 +148,10 @@ end
 
 -- 3. ФУНКЦИИ
 
--- Флай в стиле Infinite Yield (управление полностью через джойстик и камеру)
+-- Флай (IY стиль без падения)
 local iyFlying = false
 local flySpeed = 50
-AddButton("Fly (Infinite Yield Style)", function(v)
+AddButton("Fly (Fixed No-Fall)", function(v)
     iyFlying = v
     local char = LocalPlayer.Character
     if not char then return end
@@ -162,6 +161,12 @@ AddButton("Fly (Infinite Yield Style)", function(v)
 
     if iyFlying then
         hum.PlatformStand = true
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "IY_FlyVelocity"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = hrp
+
         task.spawn(function()
             while iyFlying and ScreenGui.Parent do
                 RunService.RenderStepped:Wait()
@@ -169,48 +174,65 @@ AddButton("Fly (Infinite Yield Style)", function(v)
                 if not currentChar then break end
                 local currentHrp = currentChar:FindFirstChild("HumanoidRootPart")
                 local currentHum = currentChar:FindFirstChildOfClass("Humanoid")
-                if not currentHrp or not currentHum then break end
+                local activeBv = currentHrp and currentHrp:FindFirstChild("IY_FlyVelocity")
+                if not currentHrp or not currentHum or not activeBv then break end
 
                 local camCFrame = Camera.CFrame
                 local moveDir = currentHum.MoveDirection
                 
-                -- Логика IY: куда отклонен джойстик относительно камеры, туда и летим
-                local velocity = Vector3.new(0, 0, 0)
                 if moveDir.Magnitude > 0 then
-                    velocity = (camCFrame.RightVector * moveDir.X + camCFrame.LookVector * moveDir.Z).Unit * flySpeed
+                    activeBv.Velocity = (camCFrame.RightVector * moveDir.X + camCFrame.LookVector * moveDir.Z).Unit * flySpeed
                 else
-                    velocity = Vector3.new(0, 0.1, 0) -- Зависание на месте
+                    activeBv.Velocity = Vector3.new(0, 0, 0)
                 end
                 
-                currentHrp.AssemblyLinearVelocity = velocity
                 currentHrp.CFrame = CFrame.new(currentHrp.Position, currentHrp.Position + camCFrame.LookVector)
+            end
+            if hrp and hrp:FindFirstChild("IY_FlyVelocity") then
+                hrp.IY_FlyVelocity:Destroy()
             end
         end)
     else
         hum.PlatformStand = false
+        if hrp and hrp:FindFirstChild("IY_FlyVelocity") then
+            hrp.IY_FlyVelocity:Destroy()
+        end
         if hrp then hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end
     end
 end)
 
--- Стабильный Флинг (Спин 700 на месте без улетаний)
-local newFlingActive = false
-AddButton("Fling (Спин 700 на месте)", function(v) newFlingActive = v end)
+-- Флинг стоя и с возможностью ходить
+local standFlingActive = false
+AddButton("Fling (Стоя и с ходьбой)", function(v) 
+    standFlingActive = v 
+    if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+    end
+end)
 
 RunService.Heartbeat:Connect(function()
-    if newFlingActive and ScreenGui.Parent then
+    if standFlingActive and ScreenGui.Parent then
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if hrp and hum then
-            hrp.AssemblyAngularVelocity = Vector3.new(0, 700, 0)
-            hrp.AssemblyLinearVelocity = Vector3.new(0, 2, 0) -- Жесткая стабилизация на месте
+            -- Вращаем только по оси Y, заставляя персонажа оставаться вертикально (стоя)
+            local currentAngle = hrp.CFrams and hrp.CFrame.Rotation or hrp.CFrame
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 1000, 0)
         end
     end
 end)
 
 -- Noclip
 local noclipActive = false
-AddButton("Noclip (Сквозь стены)", function(v) noclipActive = v end)
+AddButton("Noclip (Сквозь стены)", function(v) 
+    noclipActive = v 
+    if not v and LocalPlayer.Character then
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = true end
+        end
+    end
+end)
 RunService.Stepped:Connect(function()
     if noclipActive and ScreenGui.Parent and LocalPlayer.Character then
         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
@@ -221,7 +243,11 @@ end)
 
 -- Speed Hack
 local speedActive = false
-AddButton("Speed Hack (Скорость)", function(v) speedActive = v end)
+AddButton("Speed Hack (Скорость)", function(v) 
+    speedActive = v 
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum and not v then hum.WalkSpeed = 16 end
+end)
 RunService.Heartbeat:Connect(function()
     if speedActive and ScreenGui.Parent and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 35
@@ -230,33 +256,37 @@ end)
 
 -- High Jump
 local highJumpActive = false
-AddButton("High Jump (Прыжок)", function(v) highJumpActive = v end)
+AddButton("High Jump (Прыжок)", function(v) 
+    highJumpActive = v 
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum and not v then hum.JumpPower = 50 end
+end)
 RunService.Heartbeat:Connect(function()
     if highJumpActive and ScreenGui.Parent and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = 120
     end
 end)
 
--- ESP
+-- ESP Переменные
 local espBoxActive = false
 local boxObjects = {}
-AddButton("ESP Box", function(v) espBoxActive = v end)
+AddButton("ESP Box", function(v) espBoxActive = v if not v then for _, o in pairs(boxObjects) do if o then o:Remove() end end boxObjects = {} end)
 
 local espLinesActive = false
 local lineObjects = {}
-AddButton("ESP Lines (Трасеры)", function(v) espLinesActive = v end)
+AddButton("ESP Lines (Трасеры)", function(v) espLinesActive = v if not v then for _, o in pairs(lineObjects) do if o then o:Remove() end end lineObjects = {} end)
 
 local espPlayerNames = false
 local nameObjects = {}
-AddButton("ESP Player (Ники)", function(v) espPlayerNames = v end)
+AddButton("ESP Player (Ники)", function(v) espPlayerNames = v if not v then for _, o in pairs(nameObjects) do if o then o:Remove() end end nameObjects = {} end)
 
 local espRolesActive = false
 local roleObjects = {}
-AddButton("ESP Roles (Роли)", function(v) espRolesActive = v end)
+AddButton("ESP Roles (Роли)", function(v) espRolesActive = v if not v then for _, o in pairs(roleObjects) do if o then o:Remove() end end roleObjects = {} end)
 
 local espNpcActive = false
 local npcObjects = {}
-AddButton("ESP NPC", function(v) espNpcActive = v end)
+AddButton("ESP NPC", function(v) espNpcActive = v if not v then for _, o in pairs(npcObjects) do if o then o:Remove() end end npcObjects = {} end)
 
 RunService.RenderStepped:Connect(function()
     for _, o in pairs(boxObjects) do if o then o:Remove() end end boxObjects = {}
@@ -450,5 +480,4 @@ end)
 -- Кнопка Shift
 CreateScreenButton("Shift", UDim2.new(0, 50, 0, 42), UDim2.new(1, -112, 0.45, 0), function()
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then hum.WalkSpeed = (hum.WalkSpeed == 16) and 24 or 16 end
-end)
+    if hum then hum.WalkSpeed = (hum
