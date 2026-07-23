@@ -1,4 +1,4 @@
--- SBERBANK HUB [ФИНАЛЬНЫЙ МОБИЛЬНЫЙ ИНТЕРФЕЙС СО ВСЕМИ КНОПКАМИ И ИКОНКОЙ]
+-- SBERBANK HUB [ПОЛНАЯ ВЕРСИЯ СО ВСЕМИ ФУНКЦИЯМИ И МОБИЛЬНЫМИ КНОПКАМИ]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -16,7 +16,7 @@ ScreenGui.Name = "SberbankHubGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
--- 1. ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ ХАБА (ВЕРНУЛИ НА МЕСТО)
+-- 1. ИКОНКА ОТКРЫТИЯ/ЗАКРЫТИЯ ХАБА
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
 ToggleButton.Size = UDim2.new(0, 45, 0, 45)
 ToggleButton.Position = UDim2.new(0, 20, 0, 200)
@@ -57,7 +57,7 @@ Title.Size = UDim2.new(1, -16, 0, 32)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FINAL]"
+Title.Text = "SBERBANK HUB [ALL FUNCTIONS]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 11
 Title.Font = Enum.Font.GothamBold
@@ -372,7 +372,7 @@ AddButton("Bring All Items (Лут)", function()
     end
 end)
 
--- 3. ЭКРАННЫЕ КНОПКИ (E, Q, Shift, Gift) — СБОКУ СПРАВА, ЧТОБЫ НЕ ПЕРЕКРЫВАТЬ МЕНЮ СКРИПТА И РОБЛОКСА
+-- 3. ЭКРАННЫЕ КНОПКИ (E, Q, Shift, Gift)
 local function CreateScreenButton(name, size, pos, callback)
     local btn = Instance.new("TextButton", ScreenGui)
     btn.Size = size
