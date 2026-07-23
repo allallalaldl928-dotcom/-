@@ -1,7 +1,6 @@
 -- SBERBANK HUB [MOBILE FIXED & SUPER SPIN]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
 local Camera = Workspace.CurrentCamera
@@ -112,7 +111,7 @@ AddButton("Super Spin (Быстрое откидывание)", function(v) spin
 RunService.Heartbeat:Connect(function()
     if spinActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 30000, 0)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 50000, 0)
         hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
     end
 end)
@@ -286,7 +285,7 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- ЭКРАННЫЕ КНОПКИ (Безопасные для мобилок)
+-- ЭКРАННЫЕ КНОПКИ (Безопасные для мобилок, без краша джойстика)
 local vim = pcall(function() return game:GetService("VirtualInputManager") end) and game:GetService("VirtualInputManager") or nil
 
 local function CreateKey(name, size, pos, keyCode)
