@@ -1,4 +1,4 @@
--- SBERBANK HUB [FULL UI MOBILE FIXED]
+-- SBERBANK HUB [FINAL FULL MOBILE]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -55,7 +55,7 @@ Title.Size = UDim2.new(1, -16, 0, 40)
 Title.Position = UDim2.new(0, 8, 0, 8)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 Title.BackgroundTransparency = 0.2
-Title.Text = "SBERBANK HUB [FIXED]"
+Title.Text = "SBERBANK HUB [FINAL]"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
@@ -106,14 +106,14 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ
+-- 1. ФЛИНГ (Круговая карусель с раскидыванием)
 local flingActive = false
 AddButton("Fling (Безопасная крутилка)", function(v) flingActive = v end)
 RunService.Heartbeat:Connect(function()
     if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 25000, 0)
-        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 2, hrp.AssemblyLinearVelocity.Z)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 45000, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(math.sin(tick() * 50) * 50, 2, math.cos(tick() * 50) * 50)
     end
 end)
 
@@ -289,13 +289,14 @@ end)
 -- КАСТОМНЫЙ ДЖОЙСТИК
 local thumbstickArea = Instance.new("Frame", ScreenGui)
 thumbstickArea.Name = "CustomThumbstickArea"
-thumbstickArea.Size = UDim2.new(0, 180, 0, 180)
-thumbstickArea.Position = UDim2.new(0, 45, 1, -210)
+thumbstickArea.Size = UDim2.new(0, 200, 0, 200)
+thumbstickArea.Position = UDim2.new(0, 20, 1, -220)
 thumbstickArea.BackgroundTransparency = 1
+thumbstickArea.Active = true
 
 local stickBase = Instance.new("Frame", thumbstickArea)
 stickBase.Size = UDim2.new(0, 100, 0, 100)
-stickBase.Position = UDim2.new(0.5, -50, 0.5, -50)
+stickBase.Position = UDim2.new(0, 10, 0.5, -50)
 stickBase.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 stickBase.BackgroundTransparency = 0.6
 Instance.new("UICorner", stickBase).CornerRadius = UDim.new(1, 0)
@@ -406,4 +407,4 @@ CreateKey("ПКМ", UDim2.new(0, 100, 0, 60), UDim2.new(0.65, -50, 0, 45), nil, 
 CreateKey("Q", UDim2.new(0, 55, 0, 55), UDim2.new(1, -70, 0, 55), Enum.KeyCode.Q, nil)
 CreateKey("Shift", UDim2.new(0, 80, 0, 60), UDim2.new(0.65, -40, 0.55, 0), Enum.KeyCode.LeftShift, nil)
 
-print("Sberbank Hub успешно запущен!")
+print("Sberbank Hub [FINAL] успешно запущен!")
