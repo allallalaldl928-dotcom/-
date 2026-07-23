@@ -1,4 +1,4 @@
--- SBERBANK HUB [ULTIMATE PRO EDITION]
+-- SBERBANK HUB [FINAL ULTIMATE EDITION]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -20,54 +20,55 @@ ScreenGui.ResetOnSpawn = false
 local ToggleButton = Instance.new("ImageButton", ScreenGui)
 ToggleButton.Size = UDim2.new(0, 45, 0, 45)
 ToggleButton.Position = UDim2.new(0, 20, 0, 200)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(15, 40, 25)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 130, 65)
 ToggleButton.Image = "rbxassetid://18828254115"
 ToggleButton.ScaleType = Enum.ScaleType.Crop
 ToggleButton.Draggable = true
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
-Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(0, 200, 100), Thickness = 2})
+Instance.new("UIStroke", ToggleButton, {Color = Color3.fromRGB(255, 255, 255), Thickness = 2})
 
--- Главное окно
+-- Главное окно (Стиль Сбербанка с градиентом)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 260, 0, 440)
-MainFrame.Position = UDim2.new(0.5, -130, 0.5, -220)
-MainFrame.BackgroundColor3 = Color3.fromRGB(8, 20, 12)
+MainFrame.Size = UDim2.new(0, 260, 0, 450)
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -225)
+MainFrame.BackgroundColor3 = Color3.fromRGB(5, 25, 12)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Visible = false
 MainFrame.ClipsDescendants = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-Instance.new("UIStroke", MainFrame, {Color = Color3.fromRGB(0, 180, 90), Thickness = 2})
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", MainFrame, {Color = Color3.fromRGB(0, 210, 100), Thickness = 2.5})
 
--- Фон: аватарка Сбера на всю ширину с рамками
-local BgImage = Instance.new("ImageLabel", MainFrame)
-BgImage.Size = UDim2.new(1, 40, 1, 0)
-BgImage.Position = UDim2.new(0, -20, 0, 0)
-BgImage.BackgroundTransparency = 1
-BgImage.Image = "rbxassetid://6023426915"
-BgImage.ScaleType = Enum.ScaleType.Crop
-BgImage.ImageTransparency = 0.75
+-- Премиальный градиент Сбера на фоне
+local BgGradient = Instance.new("UIGradient", MainFrame)
+BgGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 35, 18)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(2, 15, 8)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 8, 4))
+})
+BgGradient.Rotation = 45
 
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
+-- Заголовок
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -16, 0, 40)
+Title.Size = UDim2.new(1, -16, 0, 42)
 Title.Position = UDim2.new(0, 8, 0, 8)
-Title.BackgroundColor3 = Color3.fromRGB(12, 35, 22)
-Title.BackgroundTransparency = 0.3
+Title.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
+Title.BackgroundTransparency = 0.2
 Title.Text = "SBERBANK HUB [PRO]"
-Title.TextColor3 = Color3.fromRGB(0, 255, 128)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 13
 Title.Font = Enum.Font.GothamBold
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", Title, {Color = Color3.fromRGB(0, 220, 110), Thickness = 1.5})
+Instance.new("UIStroke", Title, {Color = Color3.fromRGB(0, 255, 120), Thickness = 1.5})
 
 local Scroll = Instance.new("ScrollingFrame", MainFrame)
-Scroll.Size = UDim2.new(1, -12, 1, -60)
-Scroll.Position = UDim2.new(0, 6, 0, 54)
+Scroll.Size = UDim2.new(1, -12, 1, -62)
+Scroll.Position = UDim2.new(0, 6, 0, 56)
 Scroll.BackgroundTransparency = 1
 Scroll.CanvasSize = UDim2.new(0, 0, 0, 1800)
 Scroll.ScrollBarThickness = 3
@@ -75,12 +76,12 @@ local UIList = Instance.new("UIListLayout", Scroll)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
 UIList.Padding = UDim.new(0, 6)
 
--- Функция создания кнопки с крутящейся иконкой Сбера
+-- Функция создания кнопки с анимацией
 local function AddButton(name, callback)
     local btn = Instance.new("TextButton", Scroll)
-    btn.Size = UDim2.new(1, 0, 0, 36)
-    btn.BackgroundColor3 = Color3.fromRGB(15, 38, 24)
-    btn.BackgroundTransparency = 0.25
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(10, 45, 25)
+    btn.BackgroundTransparency = 0.2
     btn.AutoButtonColor = false
     btn.Text = ""
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
@@ -96,24 +97,23 @@ local function AddButton(name, callback)
     txt.Font = Enum.Font.GothamBold
     txt.TextXAlignment = Enum.TextXAlignment.Left
     
-    local spinIcon = Instance.new("ImageLabel", btn)
-    spinIcon.Size = UDim2.new(0, 24, 0, 24)
-    spinIcon.Position = UDim2.new(1, -30, 0.5, -12)
-    spinIcon.BackgroundTransparency = 1
-    spinIcon.Image = "rbxassetid://6023426915"
-    spinIcon.ScaleType = Enum.ScaleType.Fit
+    local spinIcon = Instance.new("Frame", btn)
+    spinIcon.Size = UDim2.new(0, 22, 0, 22)
+    spinIcon.Position = UDim2.new(1, -28, 0.5, -11)
+    spinIcon.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
+    Instance.new("UICorner", spinIcon).CornerRadius = UDim.new(1, 0)
     
     task.spawn(function()
         while spinIcon and spinIcon.Parent do
-            TweenService:Create(spinIcon, TweenInfo.new(2, Enum.EasingStyle.Linear), {Rotation = spinIcon.Rotation + 360}):Play()
-            task.wait(2)
+            TweenService:Create(spinIcon, TweenInfo.new(1.5, Enum.EasingStyle.Linear), {Rotation = spinIcon.Rotation + 360}):Play()
+            task.wait(1.5)
         end
     end)
     
     local active = false
     btn.MouseButton1Click:Connect(function()
         active = not active
-        btn.BackgroundColor3 = active and Color3.fromRGB(0, 120, 60) or Color3.fromRGB(15, 38, 24)
+        btn.BackgroundColor3 = active and Color3.fromRGB(0, 130, 65) or Color3.fromRGB(10, 45, 25)
         callback(active)
     end)
 end
@@ -228,7 +228,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 3. МОЩНЫЙ УЛУЧШЕННЫЙ ФЛИНГ (РАСКАТКА ИГРОКОВ)
+-- 3. МОЩНЫЙ ФЛИНГ
 local flingActive = false
 AddButton("Fling Spin (Мощный Флинг)", function(v)
     flingActive = v
@@ -238,7 +238,6 @@ RunService.Heartbeat:Connect(function()
     if flingActive and LocalPlayer.Character then
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
-            -- Находим ближайшего игрока для флинга
             local target = nil
             local minDist = math.huge
             for _, plr in ipairs(Players:GetPlayers()) do
@@ -294,8 +293,8 @@ local function CreatePojavKey(name, size, pos)
     local btn = Instance.new("TextButton", PojavPanel)
     btn.Size = size
     btn.Position = pos
-    btn.BackgroundColor3 = Color3.fromRGB(20, 35, 25)
-    btn.BackgroundTransparency = 0.4
+    btn.BackgroundColor3 = Color3.fromRGB(15, 40, 25)
+    btn.BackgroundTransparency = 0.35
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.TextSize = 14
@@ -319,4 +318,4 @@ btnE.MouseButton1Click:Connect(function()
     vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
 end)
 
-print("Sberbank Hub [Pro Edition] успешно запущен!")
+print("Sberbank Hub [Final Edition] успешно запущен!")
