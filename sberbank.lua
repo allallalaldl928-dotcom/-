@@ -1,4 +1,4 @@
--- SBERBANK HUB [FINAL FIXED MOVEMENT & BUTTONS]
+-- SBERBANK HUB [SPIN & FIXED JOYSTICK]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -106,14 +106,13 @@ local function AddButton(name, callback)
     end)
 end
 
--- 1. ФЛИНГ (Строго по оси Y)
-local flingActive = false
-AddButton("Fling (Строго по оси Rotate)", function(v) flingActive = v end)
+-- 1. СПИН (Вращение по оси Rotate)
+local spinActive = false
+AddButton("Spin (Вращение на месте)", function(v) spinActive = v end)
 RunService.Heartbeat:Connect(function()
-    if flingActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    if spinActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 30000, 0)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        hrp.AssemblyAngularVelocity = Vector3.new(0, 50, 0)
     end
 end)
 
@@ -286,11 +285,11 @@ AddButton("Bring All Items (Собрать лут)", function()
     end
 end)
 
--- НАДЕЖНЫЙ ДЖОЙСТИК (Не ломает камеру и движение)
+-- ДЖОЙСТИК (Сдвинут правее: X = 120)
 local thumbstickArea = Instance.new("Frame", ScreenGui)
 thumbstickArea.Name = "CustomThumbstickArea"
 thumbstickArea.Size = UDim2.new(0, 200, 0, 200)
-thumbstickArea.Position = UDim2.new(0, 20, 1, -220)
+thumbstickArea.Position = UDim2.new(0, 120, 1, -220)
 thumbstickArea.BackgroundTransparency = 1
 thumbstickArea.Active = true
 
@@ -360,7 +359,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ЭКРАННЫЕ КНОПКИ (Исправленные, не сбрасывают ходьбу)
+-- ЭКРАННЫЕ КНОПКИ
 local vim = game:GetService("VirtualInputManager")
 
 local function CreateKey(name, size, pos, keyCode, isMouse)
@@ -377,7 +376,6 @@ local function CreateKey(name, size, pos, keyCode, isMouse)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", btn, {Color = Color3.fromRGB(200, 200, 200), Thickness = 2})
 
-    -- Используем Sink-логику касаний, чтобы палец на кнопке не триггерил сброс джойстика
     btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             btn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
