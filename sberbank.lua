@@ -1,4 +1,4 @@
--- THE ULTIMATE MOBILE FAKE VR (Real Spoof, First Person Visible, Fixed Joysticks)
+-- ULTIMATE MOBILE FAKE VR (FIXED FLYING / NO-FLY BUG)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -10,6 +10,7 @@ local Camera = Workspace.CurrentCamera
 
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
+local RootPart = Character:WaitForChild("HumanoidRootPart")
 
 if Humanoid.RigType ~= Enum.HumanoidRigType.R15 then
     warn("⚠️ Требуется R15!")
@@ -23,19 +24,35 @@ pcall(function()
     setreadonly(mt, false)
     mt.__index = newcclosure(function(self, key)
         if key == "VREnabled" and (self == UserInputService or self == game:GetService("VRService")) then
-            return true -- Заставляем игру думать, что мы в VR шлеме
+            return true 
         end
         return oldIndex(self, key)
     end)
     setreadonly(mt, true)
-    print("✅ VR Spoofing успешно активирован!")
 end)
 
 -- 2. ОТКЛЮЧЕНИЕ ДЕФОЛТНЫХ АНИМАЦИЙ
 local animateScript = Character:FindFirstChild("Animate")
 if animateScript then animateScript.Enabled = false end
 
--- 3. СОЗДАНИЕ ИНТЕРФЕЙСА
+-- 3. СОЗДАНИЕ ВИЗУАЛЬНЫХ ПРЯМОУГОЛЬНИКОВ-РУК (Только для тебя)
+local function createVisualHand(name, color)
+    local part = Instance.new("Part")
+    part.Name = name
+    part.Size = Vector3.new(0.4, 0.4, 0.8)
+    part.BrickColor = BrickColor.new(color)
+    part.Material = Enum.Material.Neon
+    part.Transparency = 0.3
+    part.CanCollide = false
+    part.Anchored = true
+    part.Parent = Workspace
+    return part
+end
+
+local visualLeftHand = createVisualHand("VRVisualLeftHand", "Bright green")
+local visualRightHand = createVisualHand("VRVisualRightHand", "Bright blue")
+
+-- 4. СОЗДАНИЕ ИНТЕРФЕЙСА (Джойстики и слайдеры)
 if CoreGui:FindFirstChild("UltimateVRGui") then
     CoreGui.UltimateVRGui:Destroy()
 end
@@ -52,7 +69,7 @@ local function createJoystick(name, position)
     bg.Position = position
     bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     bg.BackgroundTransparency = 0.6
-    bg.Active = true -- Обязательно для мобильного тача
+    bg.Active = true
     Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
 
     local stick = Instance.new("Frame", bg)
@@ -102,7 +119,6 @@ local function createSlider(name, text, position)
     return bg, knob
 end
 
--- Размещение UI элементов
 local leftJoyBg, leftJoyStick = createJoystick("L Hand (X/Y)", UDim2.new(0, 30, 0.4, 0))
 local leftExtBg, leftExtKnob = createSlider("LeftExt", "Push", UDim2.new(0, 160, 0.4, -10))
 local leftRotBg, leftRotKnob = createSlider("LeftRot", "Rotate", UDim2.new(0, 215, 0.4, -10))
@@ -113,7 +129,7 @@ local rightRotBg, rightRotKnob = createSlider("RightRot", "Rotate", UDim2.new(1,
 
 local vrData = { lX = 0, lY = 0, lZ = -1.5, lRot = 0, rX = 0, rY = 0, rZ = -1.5, rRot = 0 }
 
--- 4. НАДЕЖНАЯ ЛОГИКА ДЖОЙСТИКОВ (Исправлено для мобилок)
+-- Логика джойстиков
 local function bindJoystick(bg, stick, prefix)
     local trackingInput = nil
     local startPos = nil
@@ -142,7 +158,7 @@ local function bindJoystick(bg, stick, prefix)
     end)
 end
 
--- НАДЕЖНАЯ ЛОГИКА СЛАЙДЕРОВ
+-- Логика слайдеров
 local function bindSlider(bg, knob, dataKey, minVal, maxVal)
     local trackingInput = nil
 
@@ -175,7 +191,6 @@ bindSlider(leftRotBg, leftRotKnob, "lRot", math.rad(-90), math.rad(90))
 bindSlider(rightExtBg, rightExtKnob, "rZ", -4, -0.5)
 bindSlider(rightRotBg, rightRotKnob, "rRot", math.rad(-90), math.rad(90))
 
--- 5. ТРАНСФОРМАЦИЯ (Движения рук) И ВИДИМОСТЬ ОТ 1 ЛИЦА
 local function applyTransform(motorName, targetWorldCFrame)
     local motor = Character:FindFirstChild(motorName, true)
     if motor and motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then
@@ -184,35 +199,48 @@ local function applyTransform(motorName, targetWorldCFrame)
     end
 end
 
+-- 5. ОСНОВНОЙ ЦИКЛ БЕЗ ПОЛЕТА
 RunService.RenderStepped:Connect(function()
     if not Character or Humanoid.Health <= 0 then return end
     
-    -- Видимость от первого лица (убираем прозрачность у всего, кроме головы)
+    -- Убираем прозрачность тела (кроме головы)
     for _, part in ipairs(Character:GetChildren()) do
         if part:IsA("BasePart") and part.Name ~= "Head" then
             part.LocalTransparencyModifier = 0
         end
     end
-    -- Руки (кисти)
-    for _, acc in ipairs(Character:GetDescendants()) do
-        if acc:IsA("BasePart") and acc.Name:match("Hand") then
-            acc.LocalTransparencyModifier = 0
-        end
-    end
 
     local camCF = Camera.CFrame
-    local leftBase = camCF * CFrame.new(-1.2 + vrData.lX, -0.5 + vrData.lY, vrData.lZ)
-    local rightBase = camCF * CFrame.new(1.2 + vrData.rX, -0.5 + vrData.rY, vrData.rZ)
+    
+    -- Строго ограничиваем высоту относительно торса, чтобы персонаж не взлетал
+    local torso = Character:FindFirstChild("UpperTorso") or Character:FindFirstChild("Torso")
+    if not torso then return end
+    
+    local safeY = math.clamp(vrData.lY, -0.8, 0.8)
+    local safeRightY = math.clamp(vrData.rY, -0.8, 0.8)
+
+    local leftBase = camCF * CFrame.new(-1.2 + vrData.lX, -0.5 + safeY, vrData.lZ)
+    local rightBase = camCF * CFrame.new(1.2 + vrData.rX, -0.5 + safeRightY, vrData.rZ)
 
     local targetLeft = leftBase * CFrame.Angles(math.rad(90), vrData.lRot, 0)
     local targetRight = rightBase * CFrame.Angles(math.rad(90), vrData.rRot, 0)
 
+    -- Обновляем визуальные блоки для тебя
+    visualLeftHand.CFrame = targetLeft
+    visualRightHand.CFrame = targetRight
+
+    -- Передаем руки на сервер
     applyTransform("LeftShoulder", targetLeft)
     applyTransform("RightShoulder", targetRight)
     
-    -- Блокировка локтей (жесткие руки)
+    -- Фиксируем суставы
     for _, joint in ipairs({"LeftElbow", "RightElbow", "LeftWrist", "RightWrist"}) do
         local m = Character:FindFirstChild(joint, true)
         if m and m:IsA("Motor6D") then m.Transform = CFrame.new() end
     end
+end)
+
+LocalPlayer.CharacterRemoving:Connect(function()
+    if visualLeftHand then visualLeftHand:Destroy() end
+    if visualRightHand then visualRightHand:Destroy() end
 end)
