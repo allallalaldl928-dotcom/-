@@ -1,4 +1,4 @@
--- ULTIMATE MOBILE FAKE VR (FIXED FLYING / NO-FLY BUG)
+-- STABLE MOBILE FAKE VR (With Fly Enabled)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -13,49 +13,36 @@ local Humanoid = Character:WaitForChild("Humanoid")
 local RootPart = Character:WaitForChild("HumanoidRootPart")
 
 if Humanoid.RigType ~= Enum.HumanoidRigType.R15 then
-    warn("⚠️ Требуется R15!")
+    warn("⚠️ Требуется R15 риг!")
     return
 end
 
--- 1. ПОДМЕНА VR (VREnabled Spoofing)
-pcall(function()
-    local mt = getrawmetatable(game)
-    local oldIndex = mt.__index
-    setreadonly(mt, false)
-    mt.__index = newcclosure(function(self, key)
-        if key == "VREnabled" and (self == UserInputService or self == game:GetService("VRService")) then
-            return true 
-        end
-        return oldIndex(self, key)
-    end)
-    setreadonly(mt, true)
-end)
-
--- 2. ОТКЛЮЧЕНИЕ ДЕФОЛТНЫХ АНИМАЦИЙ
 local animateScript = Character:FindFirstChild("Animate")
 if animateScript then animateScript.Enabled = false end
 
--- 3. СОЗДАНИЕ ВИЗУАЛЬНЫХ ПРЯМОУГОЛЬНИКОВ-РУК (Только для тебя)
-local function createVisualHand(name, color)
-    local part = Instance.new("Part")
-    part.Name = name
-    part.Size = Vector3.new(0.4, 0.4, 0.8)
-    part.BrickColor = BrickColor.new(color)
-    part.Material = Enum.Material.Neon
-    part.Transparency = 0.3
-    part.CanCollide = false
-    part.Anchored = true
-    part.Parent = Workspace
-    return part
-end
-
-local visualLeftHand = createVisualHand("VRVisualLeftHand", "Bright green")
-local visualRightHand = createVisualHand("VRVisualRightHand", "Bright blue")
-
--- 4. СОЗДАНИЕ ИНТЕРФЕЙСА (Джойстики и слайдеры)
 if CoreGui:FindFirstChild("UltimateVRGui") then
     CoreGui.UltimateVRGui:Destroy()
 end
+
+local visualLeftHand = Instance.new("Part")
+visualLeftHand.Name = "VRVisualLeftHand"
+visualLeftHand.Size = Vector3.new(0.4, 0.4, 0.8)
+visualLeftHand.BrickColor = BrickColor.new("Bright green")
+visualLeftHand.Material = Enum.Material.Neon
+visualLeftHand.Transparency = 0.3
+visualLeftHand.CanCollide = false
+visualLeftHand.Anchored = true
+visualLeftHand.Parent = Workspace
+
+local visualRightHand = Instance.new("Part")
+visualRightHand.Name = "VRVisualRightHand"
+visualRightHand.Size = Vector3.new(0.4, 0.4, 0.8)
+visualRightHand.BrickColor = BrickColor.new("Bright blue")
+visualRightHand.Material = Enum.Material.Neon
+visualRightHand.Transparency = 0.3
+visualRightHand.CanCollide = false
+visualRightHand.Anchored = true
+visualRightHand.Parent = Workspace
 
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = "UltimateVRGui"
@@ -129,7 +116,6 @@ local rightRotBg, rightRotKnob = createSlider("RightRot", "Rotate", UDim2.new(1,
 
 local vrData = { lX = 0, lY = 0, lZ = -1.5, lRot = 0, rX = 0, rY = 0, rZ = -1.5, rRot = 0 }
 
--- Логика джойстиков
 local function bindJoystick(bg, stick, prefix)
     local trackingInput = nil
     local startPos = nil
@@ -158,7 +144,6 @@ local function bindJoystick(bg, stick, prefix)
     end)
 end
 
--- Логика слайдеров
 local function bindSlider(bg, knob, dataKey, minVal, maxVal)
     local trackingInput = nil
 
@@ -192,18 +177,18 @@ bindSlider(rightExtBg, rightExtKnob, "rZ", -4, -0.5)
 bindSlider(rightRotBg, rightRotKnob, "rRot", math.rad(-90), math.rad(90))
 
 local function applyTransform(motorName, targetWorldCFrame)
-    local motor = Character:FindFirstChild(motorName, true)
-    if motor and motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then
-        local localCFrame = motor.C0:Inverse() * motor.Part0.CFrame:Inverse() * targetWorldCFrame * motor.C1
-        motor.Transform = localCFrame
-    end
+    pcall(function()
+        local motor = Character:FindFirstChild(motorName, true)
+        if motor and motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then
+            local localCFrame = motor.C0:Inverse() * motor.Part0.CFrame:Inverse() * targetWorldCFrame * motor.C1
+            motor.Transform = localCFrame
+        end
+    end)
 end
 
--- 5. ОСНОВНОЙ ЦИКЛ БЕЗ ПОЛЕТА
 RunService.RenderStepped:Connect(function()
-    if not Character or Humanoid.Health <= 0 then return end
+    if not Character or not Humanoid or Humanoid.Health <= 0 then return end
     
-    -- Убираем прозрачность тела (кроме головы)
     for _, part in ipairs(Character:GetChildren()) do
         if part:IsA("BasePart") and part.Name ~= "Head" then
             part.LocalTransparencyModifier = 0
@@ -212,28 +197,19 @@ RunService.RenderStepped:Connect(function()
 
     local camCF = Camera.CFrame
     
-    -- Строго ограничиваем высоту относительно торса, чтобы персонаж не взлетал
-    local torso = Character:FindFirstChild("UpperTorso") or Character:FindFirstChild("Torso")
-    if not torso then return end
-    
-    local safeY = math.clamp(vrData.lY, -0.8, 0.8)
-    local safeRightY = math.clamp(vrData.rY, -0.8, 0.8)
-
-    local leftBase = camCF * CFrame.new(-1.2 + vrData.lX, -0.5 + safeY, vrData.lZ)
-    local rightBase = camCF * CFrame.new(1.2 + vrData.rX, -0.5 + safeRightY, vrData.rZ)
+    -- Вернули свободное смещение по Y, как в том скрипте, чтобы всё работало идентично
+    local leftBase = camCF * CFrame.new(-1.2 + vrData.lX, -0.5 + vrData.lY, vrData.lZ)
+    local rightBase = camCF * CFrame.new(1.2 + vrData.rX, -0.5 + vrData.rY, vrData.rZ)
 
     local targetLeft = leftBase * CFrame.Angles(math.rad(90), vrData.lRot, 0)
     local targetRight = rightBase * CFrame.Angles(math.rad(90), vrData.rRot, 0)
 
-    -- Обновляем визуальные блоки для тебя
     visualLeftHand.CFrame = targetLeft
     visualRightHand.CFrame = targetRight
 
-    -- Передаем руки на сервер
     applyTransform("LeftShoulder", targetLeft)
     applyTransform("RightShoulder", targetRight)
     
-    -- Фиксируем суставы
     for _, joint in ipairs({"LeftElbow", "RightElbow", "LeftWrist", "RightWrist"}) do
         local m = Character:FindFirstChild(joint, true)
         if m and m:IsA("Motor6D") then m.Transform = CFrame.new() end
@@ -243,4 +219,7 @@ end)
 LocalPlayer.CharacterRemoving:Connect(function()
     if visualLeftHand then visualLeftHand:Destroy() end
     if visualRightHand then visualRightHand:Destroy() end
+    if ScreenGui then ScreenGui:Destroy() end
 end)
+
+print("🚀 VR Mobile Script (Working Build) запущен!")
